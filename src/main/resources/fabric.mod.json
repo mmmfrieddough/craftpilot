@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "craftpilot",
+	"version": "${version}",
+	"name": "CraftPilot",
+	"description": "AI based building assistant.",
+	"authors": [
+		"mmmfrieddough"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/craftpilot/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"mmmfrieddough.craftpilot.CraftPilot"
+		],
+		"fabric-datagen": [
+			"mmmfrieddough.craftpilot.CraftPilotDataGenerator"
+		]
+	},
+	"mixins": [
+		"craftpilot.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.15.3",
+		"minecraft": "~1.20.4",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
