@@ -1,0 +1,17 @@
+{
+    "text.autoconfig.craftpilot.title": "CraftPilot",
+    "text.autoconfig.craftpilot.category.Client": "Client",
+    "text.autoconfig.craftpilot.option.client.enable": "Enable",
+    "text.autoconfig.craftpilot.option.client.enable.@Tooltip": "Enable the suggestions",
+    "text.autoconfig.craftpilot.category.Model": "Model",
+    "text.autoconfig.craftpilot.option.model.temperature": "Temperature",
+    "text.autoconfig.craftpilot.option.model.temperature.@Tooltip": "The temperature of the model",
+    "text.autoconfig.craftpilot.option.model.startRadius": "Start Radius",
+    "text.autoconfig.craftpilot.option.model.startRadius.@Tooltip": "The radius around the center where the generation can start",
+    "text.autoconfig.craftpilot.option.model.maxIterations": "Max Iterations",
+    "text.autoconfig.craftpilot.option.model.maxIterations.@Tooltip": "The maximum number of iterations the model can generate",
+    "text.autoconfig.craftpilot.option.model.maxBlocks": "Max Blocks",
+    "text.autoconfig.craftpilot.option.model.maxBlocks.@Tooltip": "The maximum number of blocks the model can generate",
+    "text.autoconfig.craftpilot.option.model.airProbabilityIterationScaling": "Air Probability Iteration Scaling",
+    "text.autoconfig.craftpilot.option.model.airProbabilityIterationScaling.@Tooltip": "How much the probability of air increases per iteration"
+}

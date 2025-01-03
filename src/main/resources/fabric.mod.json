@@ -20,6 +20,9 @@
 		],
 		"fabric-datagen": [
 			"mmmfrieddough.craftpilot.CraftPilotDataGenerator"
+		],
+		"modmenu": [
+			"mmmfrieddough.craftpilot.config.ModMenuIntegration"
 		]
 	},
 	"mixins": [
