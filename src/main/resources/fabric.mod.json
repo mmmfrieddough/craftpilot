@@ -13,13 +13,10 @@
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/craftpilot/icon.png",
-	"environment": "*",
+	"environment": "client",
 	"entrypoints": {
-		"main": [
+		"client": [
 			"mmmfrieddough.craftpilot.CraftPilot"
-		],
-		"fabric-datagen": [
-			"mmmfrieddough.craftpilot.CraftPilotDataGenerator"
 		],
 		"modmenu": [
 			"mmmfrieddough.craftpilot.config.ModMenuIntegration"

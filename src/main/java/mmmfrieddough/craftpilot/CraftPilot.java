@@ -1,16 +1,12 @@
 package mmmfrieddough.craftpilot;
 
-import net.fabricmc.api.ModInitializer;
+import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 import com.google.common.base.Splitter;
@@ -22,7 +18,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.sql.Ref;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -37,12 +32,10 @@ import java.io.InputStreamReader;
 import net.minecraft.registry.Registries;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
-import net.minecraft.text.Text;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import fi.dy.masa.litematica.InitHandler;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.data.SchematicHolder;
 import fi.dy.masa.litematica.schematic.LitematicaSchematic;
@@ -52,21 +45,17 @@ import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacementManager;
 import fi.dy.masa.litematica.selection.AreaSelection;
 import fi.dy.masa.litematica.selection.Box;
-import fi.dy.masa.malilib.event.InitializationHandler;
 import me.shedaniel.autoconfig.AutoConfig;
-import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
-import me.shedaniel.clothconfig2.api.ConfigBuilder;
-import me.shedaniel.clothconfig2.api.ConfigCategory;
-import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 
 import java.lang.reflect.Field;
 
-public class CraftPilot implements ModInitializer {
+public class CraftPilot implements ClientModInitializer {
 	private static ModConfig config;
 	public static final Logger LOGGER = LoggerFactory.getLogger(Reference.MOD_ID);
+
 	private static final Function<Map.Entry<Property<?>, Comparable<?>>, String> PROPERTY_MAP_PRINTER = new Function<Map.Entry<Property<?>, Comparable<?>>, String>() {
 		@Override
 		public String apply(Map.Entry<Property<?>, Comparable<?>> entry) {
@@ -238,7 +227,7 @@ public class CraftPilot implements ModInitializer {
 	private SchematicPlacement placement;
 
 	@Override
-	public void onInitialize() {
+	public void onInitializeClient() {
 		AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
 		config = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
 
