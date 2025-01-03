@@ -6,7 +6,6 @@ public class ResponseItem {
     private String value;
     private List<Integer> position;
 
-    // Getters and setters for 'value' and 'position'
     public String getValue() {
         return value;
     }
