@@ -13,5 +13,10 @@
     "text.autoconfig.craftpilot.option.model.maxBlocks": "Max Blocks",
     "text.autoconfig.craftpilot.option.model.maxBlocks.@Tooltip": "The maximum number of blocks the model can generate",
     "text.autoconfig.craftpilot.option.model.airProbabilityIterationScaling": "Air Probability Iteration Scaling",
-    "text.autoconfig.craftpilot.option.model.airProbabilityIterationScaling.@Tooltip": "How much the probability of air increases per iteration"
+    "text.autoconfig.craftpilot.option.model.airProbabilityIterationScaling.@Tooltip": "How much the probability of air increases per iteration",
+    "text.autoconfig.craftpilot.category.Rendering": "Rendering",
+    "text.autoconfig.craftpilot.option.rendering.blockPlacementOpacity": "Block Placement Opacity",
+    "text.autoconfig.craftpilot.option.rendering.blockPlacementOpacity.@Tooltip": "The opacity of the block placement",
+    "text.autoconfig.craftpilot.option.rendering.blockOutlineOpacity": "Block Outline Opacity",
+    "text.autoconfig.craftpilot.option.rendering.blockOutlineOpacity.@Tooltip": "The opacity of the block outline"
 }

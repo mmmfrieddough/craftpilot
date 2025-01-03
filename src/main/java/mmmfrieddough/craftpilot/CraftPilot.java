@@ -9,12 +9,16 @@ import mmmfrieddough.craftpilot.config.ModConfig;
 import mmmfrieddough.craftpilot.http.HttpService;
 import mmmfrieddough.craftpilot.http.ResponseItem;
 import mmmfrieddough.craftpilot.schematic.SchematicManager;
-import mmmfrieddough.craftpilot.util.BlockMatrixBuilder;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.resource.ResourceType;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -22,9 +26,9 @@ public class CraftPilot implements ClientModInitializer {
 	private static ModConfig config;
 	public static final Logger LOGGER = LoggerFactory.getLogger(Reference.MOD_ID);
 
+	private static CraftPilot instance;
 	private final HttpService httpService;
 	private final SchematicManager schematicManager;
-	private final BlockMatrixBuilder blockMatrixBuilder;
 
 	private BlockPos lastInteractedBlockPos;
 	private boolean blockPlacementPending = false;
@@ -32,11 +36,12 @@ public class CraftPilot implements ClientModInitializer {
 	public CraftPilot() {
 		this.httpService = new HttpService();
 		this.schematicManager = new SchematicManager();
-		this.blockMatrixBuilder = new BlockMatrixBuilder();
 	}
 
 	@Override
 	public void onInitializeClient() {
+		instance = this;
+
 		// Set up configuration
 		AutoConfig.register(ModConfig.class, GsonConfigSerializer::new);
 		config = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
@@ -45,6 +50,20 @@ public class CraftPilot implements ClientModInitializer {
 		KeyBindings.register();
 
 		registerCallbacks();
+
+		// Register shaders
+		ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(
+				new SimpleSynchronousResourceReloadListener() {
+					@Override
+					public Identifier getFabricId() {
+						return new Identifier("craftpilot", "shaders");
+					}
+
+					@Override
+					public void reload(ResourceManager manager) {
+						// Load shaders here if needed
+					}
+				});
 	}
 
 	private void registerCallbacks() {
@@ -52,7 +71,7 @@ public class CraftPilot implements ClientModInitializer {
 			if (!config.client.enable)
 				return ActionResult.PASS;
 
-			lastInteractedBlockPos = hitResult.getBlockPos();
+			lastInteractedBlockPos = hitResult.getBlockPos().offset(hitResult.getSide());
 			blockPlacementPending = true;
 			return ActionResult.PASS;
 		});
@@ -65,14 +84,11 @@ public class CraftPilot implements ClientModInitializer {
 		if (!blockPlacementPending || lastInteractedBlockPos == null)
 			return;
 
-		if (!schematicManager.shouldProcessBlock(world, lastInteractedBlockPos))
-			return;
-
-		String[][][] matrix = blockMatrixBuilder.getBlocksMatrix(world, lastInteractedBlockPos);
-		schematicManager.createSchematic(world, lastInteractedBlockPos);
-
-		httpService.sendRequest(matrix, config.model);
 		blockPlacementPending = false;
+
+		String[][][] matrix = schematicManager.getBlocksMatrix(world, lastInteractedBlockPos);
+		httpService.sendRequest(matrix, config.model);
+		schematicManager.createSchematic(world, lastInteractedBlockPos);
 	}
 
 	private void handleClientTick(MinecraftClient client) {
@@ -80,5 +96,17 @@ public class CraftPilot implements ClientModInitializer {
 		while ((item = httpService.getNextResponse()) != null) {
 			schematicManager.processResponse(item);
 		}
+	}
+
+	public static CraftPilot getInstance() {
+		return instance;
+	}
+
+	public SchematicManager getSchematicManager() {
+		return schematicManager;
+	}
+
+	public static ModConfig getConfig() {
+		return config;
 	}
 }

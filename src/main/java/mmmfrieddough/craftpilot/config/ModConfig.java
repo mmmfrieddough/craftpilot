@@ -33,4 +33,16 @@ public class ModConfig implements ConfigData {
         @Tooltip
         public float airProbabilityIterationScaling = 0.0f;
     }
+
+    @Category("Rendering")
+    @TransitiveObject
+    public Rendering rendering = new Rendering();
+
+    public static class Rendering {
+        @Tooltip
+        public float blockPlacementOpacity = 0.8f;
+        @Tooltip
+        public float blockOutlineOpacity = 0.4f;
+    }
+
 }

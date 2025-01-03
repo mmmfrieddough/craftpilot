@@ -81,7 +81,7 @@ public class HttpService {
                 new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                LOGGER.info(line);
+                // LOGGER.info(line);
                 ResponseItem responseItem = gson.fromJson(line, ResponseItem.class);
                 responseQueue.offer(responseItem);
             }
