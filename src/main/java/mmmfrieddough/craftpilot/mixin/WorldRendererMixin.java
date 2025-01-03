@@ -50,7 +50,7 @@ public class WorldRendererMixin {
         for (Map.Entry<BlockPos, BlockState> entry : manager.getGhostBlocks().entrySet()) {
             BlockPos pos = entry.getKey();
             // Only render blocks within view distance
-            if (pos.isWithinDistance(cameraPos, 32)) {
+            if (pos.isWithinDistance(cameraPos, config.rendering.renderDistance)) {
                 matrices.push();
                 matrices.translate(
                         pos.getX() - camera.getPos().x,
@@ -78,7 +78,7 @@ public class WorldRendererMixin {
 
         for (Map.Entry<BlockPos, BlockState> entry : manager.getGhostBlocks().entrySet()) {
             BlockPos pos = entry.getKey();
-            if (pos.isWithinDistance(cameraPos, 32)) {
+            if (pos.isWithinDistance(cameraPos, config.rendering.renderDistance)) {
                 VoxelShape shape = entry.getValue().getOutlineShape(client.world, pos);
                 shape.forEachBox((minX, minY, minZ, maxX, maxY, maxZ) -> {
                     WorldRenderer.drawBox(

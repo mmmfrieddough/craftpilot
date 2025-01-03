@@ -40,6 +40,8 @@ public class ModConfig implements ConfigData {
 
     public static class Rendering {
         @Tooltip
+        public int renderDistance = 128;
+        @Tooltip
         public float blockPlacementOpacity = 0.8f;
         @Tooltip
         public float blockOutlineOpacity = 0.4f;

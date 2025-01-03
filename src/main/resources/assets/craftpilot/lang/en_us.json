@@ -15,6 +15,8 @@
     "text.autoconfig.craftpilot.option.model.airProbabilityIterationScaling": "Air Probability Iteration Scaling",
     "text.autoconfig.craftpilot.option.model.airProbabilityIterationScaling.@Tooltip": "How much the probability of air increases per iteration",
     "text.autoconfig.craftpilot.category.Rendering": "Rendering",
+    "text.autoconfig.craftpilot.option.rendering.renderDistance": "Render Distance",
+    "text.autoconfig.craftpilot.option.rendering.renderDistance.@Tooltip": "The maximum distance the suggested blocks are rendered at",
     "text.autoconfig.craftpilot.option.rendering.blockPlacementOpacity": "Block Placement Opacity",
     "text.autoconfig.craftpilot.option.rendering.blockPlacementOpacity.@Tooltip": "The opacity of the block placement",
     "text.autoconfig.craftpilot.option.rendering.blockOutlineOpacity": "Block Outline Opacity",
