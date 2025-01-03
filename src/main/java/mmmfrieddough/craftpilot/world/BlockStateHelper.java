@@ -1,4 +1,4 @@
-package mmmfrieddough.craftpilot.schematic;
+package mmmfrieddough.craftpilot.world;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;

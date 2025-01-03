@@ -12,7 +12,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 
 import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.config.ModConfig;
-import mmmfrieddough.craftpilot.schematic.SchematicManager;
+import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
@@ -35,7 +35,7 @@ public class WorldRendererMixin {
         MinecraftClient client = MinecraftClient.getInstance();
         client.getProfiler().push("craftpilot_render");
 
-        SchematicManager manager = CraftPilot.getInstance().getSchematicManager();
+        IWorldManager manager = CraftPilot.getInstance().getWorldManager();
         Map<BlockPos, BlockState> ghostBlocks = manager.getGhostBlocks();
         // Early return if no blocks to render
         if (ghostBlocks.isEmpty()) {

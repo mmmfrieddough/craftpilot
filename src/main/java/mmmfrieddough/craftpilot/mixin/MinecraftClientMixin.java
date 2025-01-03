@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import mmmfrieddough.craftpilot.CraftPilot;
-import mmmfrieddough.craftpilot.schematic.SchematicManager;
+import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
@@ -33,7 +33,7 @@ public class MinecraftClientMixin {
         Vec3d endPos = cameraPos.add(lookVec.multiply(reach));
 
         // Do our own raytrace
-        SchematicManager manager = CraftPilot.getInstance().getSchematicManager();
+        IWorldManager manager = CraftPilot.getInstance().getWorldManager();
         BlockPos nearestPos = null;
         double nearestDist = Double.MAX_VALUE;
 
