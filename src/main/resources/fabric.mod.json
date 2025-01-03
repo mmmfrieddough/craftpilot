@@ -22,9 +22,6 @@
 			"mmmfrieddough.craftpilot.config.ModMenuIntegration"
 		]
 	},
-	"mixins": [
-		"craftpilot.mixins.json"
-	],
 	"depends": {
 		"fabricloader": ">=0.15.3",
 		"minecraft": "~1.20.4",
