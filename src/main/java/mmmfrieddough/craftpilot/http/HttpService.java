@@ -26,6 +26,7 @@ public class HttpService {
     private final Gson gson;
     private final ConcurrentLinkedQueue<ResponseItem> responseQueue;
     private CompletableFuture<HttpResponse<InputStream>> currentRequestFuture;
+    private long currentRequestId = 0;
 
     public HttpService() {
         this.httpClient = HttpClient.newHttpClient();
@@ -34,8 +35,7 @@ public class HttpService {
     }
 
     public void sendRequest(String[][][] matrix, ModConfig.Model modelConfig) {
-        // Cancel any ongoing request
-        cancelCurrentRequest();
+        final long requestId = currentRequestId;
 
         Request request = buildRequest(matrix, modelConfig);
         String jsonPayload = gson.toJson(request);
@@ -48,7 +48,7 @@ public class HttpService {
 
         currentRequestFuture = httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
 
-        currentRequestFuture.thenAccept(this::handleResponse)
+        currentRequestFuture.thenAccept(response -> handleResponse(response, requestId))
                 .exceptionally(this::handleError);
     }
 
@@ -69,7 +69,7 @@ public class HttpService {
         return request;
     }
 
-    private void handleResponse(HttpResponse<InputStream> response) {
+    private void handleResponse(HttpResponse<InputStream> response, long requestId) {
         LOGGER.info("Response status code: " + response.statusCode());
 
         if (response.statusCode() != 200) {
@@ -81,7 +81,10 @@ public class HttpService {
                 new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                // LOGGER.info(line);
+                // Ignore responses from old requests
+                if (requestId != currentRequestId) {
+                    return;
+                }
                 ResponseItem responseItem = gson.fromJson(line, ResponseItem.class);
                 responseQueue.offer(responseItem);
             }
@@ -99,5 +102,15 @@ public class HttpService {
         if (currentRequestFuture != null && !currentRequestFuture.isDone()) {
             currentRequestFuture.cancel(true);
         }
+    }
+
+    private void clearResponses() {
+        responseQueue.clear();
+    }
+
+    public void stop() {
+        currentRequestId++;
+        cancelCurrentRequest();
+        clearResponses();
     }
 }

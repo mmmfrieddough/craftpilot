@@ -56,9 +56,13 @@ public class CraftPilot implements ClientModInitializer {
 
 	private void registerCallbacks() {
 		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
+			if (!world.isClient)
+				return ActionResult.PASS;
+
 			if (!config.client.enable)
 				return ActionResult.PASS;
 
+			httpService.stop();
 			lastInteractedBlockPos = hitResult.getBlockPos().offset(hitResult.getSide());
 			blockPlacementPending = true;
 			return ActionResult.PASS;
@@ -91,7 +95,6 @@ public class CraftPilot implements ClientModInitializer {
 
 		String[][][] matrix = getBlocksMatrix(world, lastInteractedBlockPos);
 		httpService.sendRequest(matrix, config.model);
-		// worldManager.clearBlockStates();
 	}
 
 	private void handleClientTick(MinecraftClient client) {
