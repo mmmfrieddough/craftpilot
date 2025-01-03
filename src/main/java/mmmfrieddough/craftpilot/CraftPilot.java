@@ -107,6 +107,7 @@ public class CraftPilot implements ClientModInitializer {
 
 		while (KeyBindings.getClearKeyBinding().wasPressed()) {
 			LOGGER.info("Clearing suggestions");
+			httpService.stop();
 			worldManager.clearBlockStates();
 		}
 	}
