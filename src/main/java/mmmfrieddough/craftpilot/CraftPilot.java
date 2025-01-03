@@ -17,6 +17,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -99,6 +100,11 @@ public class CraftPilot implements ClientModInitializer {
 			BlockPos pos = lastInteractedBlockPos.add(item.getX() - 5, item.getY() - 5, item.getZ() - 5);
 			BlockState blockState = BlockStateHelper.parseBlockState(item.getBlockState());
 			worldManager.setBlockState(pos, blockState);
+		}
+
+		while (KeyBindings.getClearKeyBinding().wasPressed()) {
+			LOGGER.info("Clearing suggestions");
+			worldManager.clearBlockStates();
 		}
 	}
 

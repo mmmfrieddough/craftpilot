@@ -1,4 +1,6 @@
 {
+    "key.categories.craftpilot": "CraftPilot",
+    "key.craftpilot.clear": "Clear Suggestions",
     "text.autoconfig.craftpilot.title": "CraftPilot",
     "text.autoconfig.craftpilot.category.Client": "Client",
     "text.autoconfig.craftpilot.option.client.enable": "Enable",
