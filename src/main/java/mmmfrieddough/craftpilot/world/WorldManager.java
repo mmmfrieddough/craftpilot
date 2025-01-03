@@ -27,6 +27,11 @@ public class WorldManager implements IWorldManager {
     }
 
     @Override
+    public void clearBlockState(BlockPos pos) {
+        ghostBlocks.remove(pos);
+    }
+
+    @Override
     public void clearBlockStates() {
         ghostBlocks.clear();
     }

@@ -11,6 +11,8 @@ public interface IWorldManager {
 
     public BlockState getBlockState(World world, BlockPos pos);
 
+    public void clearBlockState(BlockPos pos);
+
     public void clearBlockStates();
 
     public Map<BlockPos, BlockState> getGhostBlocks();

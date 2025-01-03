@@ -17,7 +17,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -62,7 +61,6 @@ public class CraftPilot implements ClientModInitializer {
 			if (!config.client.enable)
 				return ActionResult.PASS;
 
-			httpService.stop();
 			lastInteractedBlockPos = hitResult.getBlockPos().offset(hitResult.getSide());
 			blockPlacementPending = true;
 			return ActionResult.PASS;
@@ -88,11 +86,18 @@ public class CraftPilot implements ClientModInitializer {
 	}
 
 	private void handleWorldTick(World world) {
+		// Check if block placement is pending
 		if (!blockPlacementPending || lastInteractedBlockPos == null)
 			return;
-
 		blockPlacementPending = false;
 
+		// Stop any ongoing requests
+		httpService.stop();
+
+		// Update block state
+		worldManager.clearBlockState(lastInteractedBlockPos);
+
+		// Send request to server
 		String[][][] matrix = getBlocksMatrix(world, lastInteractedBlockPos);
 		httpService.sendRequest(matrix, config.model);
 	}
