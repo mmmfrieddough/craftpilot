@@ -46,7 +46,7 @@ import fi.dy.masa.litematica.schematic.placement.SchematicPlacementManager;
 import fi.dy.masa.litematica.selection.AreaSelection;
 import fi.dy.masa.litematica.selection.Box;
 import me.shedaniel.autoconfig.AutoConfig;
-import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
+import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 
@@ -228,7 +228,7 @@ public class CraftPilot implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
+		AutoConfig.register(ModConfig.class, GsonConfigSerializer::new);
 		config = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
 
 		KeyBindings.register(); // Register the key bindings
