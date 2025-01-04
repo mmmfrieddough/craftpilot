@@ -3,6 +3,7 @@ package mmmfrieddough.craftpilot.http;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -10,6 +11,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 
@@ -17,10 +19,11 @@ import com.google.gson.Gson;
 
 import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.config.ModConfig;
+import net.minecraft.text.Text;
+import net.minecraft.client.MinecraftClient;
 
 public class HttpService {
     private static final Logger LOGGER = CraftPilot.LOGGER;
-    private static final String API_ENDPOINT = "http://127.0.0.1:8000/complete-structure/";
 
     private final HttpClient httpClient;
     private final Gson gson;
@@ -34,22 +37,42 @@ public class HttpService {
         this.responseQueue = new ConcurrentLinkedQueue<>();
     }
 
-    public void sendRequest(String[][][] matrix, ModConfig.Model modelConfig) {
+    public void sendRequest(String[][][] matrix, ModConfig.Model config) {
         final long requestId = currentRequestId;
 
-        Request request = buildRequest(matrix, modelConfig);
+        Request request = buildRequest(matrix, config);
         String jsonPayload = gson.toJson(request);
 
         HttpRequest httpRequest = HttpRequest.newBuilder()
-                .uri(URI.create(API_ENDPOINT))
+                .uri(URI.create(config.serverUrl))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                 .build();
 
         currentRequestFuture = httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
 
-        currentRequestFuture.thenAccept(response -> handleResponse(response, requestId))
-                .exceptionally(this::handleError);
+        currentRequestFuture
+                .thenAccept(response -> handleResponse(response, requestId))
+                .exceptionally(throwable -> {
+                    Throwable cause = throwable.getCause();
+                    if (cause instanceof ConnectException) {
+                        String errorMsg = String.format("Server %s appears to be offline or unreachable",
+                                config.serverUrl);
+                        LOGGER.error(errorMsg + ": {}", cause.getMessage());
+                        MinecraftClient.getInstance().player
+                                .sendMessage(Text.literal(errorMsg).styled(style -> style.withColor(0xFF0000)));
+                    } else if (cause instanceof TimeoutException) {
+                        String errorMsg = "Request timed out - server may be unresponsive";
+                        LOGGER.error(errorMsg);
+                        MinecraftClient.getInstance().player
+                                .sendMessage(Text.literal(errorMsg).styled(style -> style.withColor(0xFF0000)));
+                    } else {
+                        LOGGER.error("Error sending HTTP request", throwable);
+                        MinecraftClient.getInstance().player.sendMessage(
+                                Text.literal("Error sending HTTP request").styled(style -> style.withColor(0xFF0000)));
+                    }
+                    return null;
+                });
     }
 
     public ResponseItem getNextResponse() {
@@ -91,11 +114,6 @@ public class HttpService {
         } catch (Exception e) {
             LOGGER.error("Error handling the streaming response", e);
         }
-    }
-
-    private Void handleError(Throwable e) {
-        LOGGER.error("Error sending HTTP request", e);
-        return null;
     }
 
     private void cancelCurrentRequest() {

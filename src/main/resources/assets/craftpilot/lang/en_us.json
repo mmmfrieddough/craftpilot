@@ -10,6 +10,8 @@
     "text.autoconfig.craftpilot.option.general.placedBlocksThreshold": "Placed Blocks Threshold",
     "text.autoconfig.craftpilot.option.general.placedBlocksThreshold.@Tooltip": "The amount of blocks the user has to place before the suggestion is expanded",
     "text.autoconfig.craftpilot.category.Model": "Model",
+    "text.autoconfig.craftpilot.option.model.serverUrl": "Server URL",
+    "text.autoconfig.craftpilot.option.model.serverUrl.@Tooltip": "The URL of the server to make the requests to",
     "text.autoconfig.craftpilot.option.model.temperature": "Temperature",
     "text.autoconfig.craftpilot.option.model.temperature.@Tooltip": "The temperature of the model",
     "text.autoconfig.craftpilot.option.model.startRadius": "Start Radius",

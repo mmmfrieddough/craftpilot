@@ -27,6 +27,8 @@ public class ModConfig implements ConfigData {
 
     public static class Model {
         @Tooltip
+        public String serverUrl = "http://127.0.0.1:8000/complete-structure/";
+        @Tooltip
         public float temperature = 0.7f;
         @Tooltip
         public int startRadius = 1;
