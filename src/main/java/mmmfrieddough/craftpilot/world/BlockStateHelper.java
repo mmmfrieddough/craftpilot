@@ -60,8 +60,4 @@ public class BlockStateHelper {
         }
         return state;
     }
-
-    private static Object parsePropertyValue(Property<?> property, String value) {
-        return property.parse(value).orElse(null);
-    }
 }
