@@ -9,6 +9,8 @@ import net.minecraft.world.World;
 public interface IWorldManager {
     public void setBlockState(BlockPos pos, BlockState blockState);
 
+    public BlockState getGhostBlockState(BlockPos pos);
+
     public BlockState getBlockState(World world, BlockPos pos);
 
     public void clearBlockState(BlockPos pos);

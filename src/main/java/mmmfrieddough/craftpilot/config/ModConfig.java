@@ -8,13 +8,17 @@ import me.shedaniel.autoconfig.annotation.ConfigEntry.Gui.Tooltip;
 
 @Config(name = mmmfrieddough.craftpilot.Reference.MOD_ID)
 public class ModConfig implements ConfigData {
-    @Category("Client")
+    @Category("General")
     @TransitiveObject
-    public Client client = new Client();
+    public General general = new General();
 
-    public static class Client {
+    public static class General {
         @Tooltip
         public boolean enable = true;
+        @Tooltip
+        public int nonMatchingBlocksThreshold = 3;
+        @Tooltip
+        public int placedBlocksThreshold = 3;
     }
 
     @Category("Model")

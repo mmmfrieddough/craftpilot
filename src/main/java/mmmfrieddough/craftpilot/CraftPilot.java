@@ -31,8 +31,10 @@ public class CraftPilot implements ClientModInitializer {
 	private final HttpService httpService;
 	private final IWorldManager worldManager;
 
-	private BlockPos lastInteractedBlockPos;
+	private BlockPos placedBlockPos;
 	private boolean blockPlacementPending = false;
+	private int nonMatchingBlockCount = 0;
+	private int placedBlockCount = 0;
 
 	public CraftPilot() {
 		this.httpService = new HttpService();
@@ -58,10 +60,10 @@ public class CraftPilot implements ClientModInitializer {
 			if (!world.isClient)
 				return ActionResult.PASS;
 
-			if (!config.client.enable)
+			if (!config.general.enable)
 				return ActionResult.PASS;
 
-			lastInteractedBlockPos = hitResult.getBlockPos().offset(hitResult.getSide());
+			placedBlockPos = hitResult.getBlockPos().offset(hitResult.getSide());
 			blockPlacementPending = true;
 			return ActionResult.PASS;
 		});
@@ -87,25 +89,62 @@ public class CraftPilot implements ClientModInitializer {
 
 	private void handleWorldTick(World world) {
 		// Check if block placement is pending
-		if (!blockPlacementPending || lastInteractedBlockPos == null)
+		if (!blockPlacementPending || placedBlockPos == null)
 			return;
 		blockPlacementPending = false;
 
-		// Stop any ongoing requests
+		// Get the suggested and actual block states
+		BlockState ghostBlockState = worldManager.getGhostBlockState(placedBlockPos);
+		BlockState blockState = world.getBlockState(placedBlockPos);
+
+		// Handle block placement based on state
+		if (ghostBlockState == null) {
+			// New area - always request suggestions
+			requestNewSuggestions(world);
+			return;
+		}
+
+		// Increment counters
+		placedBlockCount++;
+
+		// Clear the old suggestion at the current position
+		worldManager.clearBlockState(placedBlockPos);
+
+		if (!ghostBlockState.equals(blockState)) {
+			nonMatchingBlockCount++;
+			httpService.stop(); // Stop current request when user deviates
+
+			// Clear all suggestions if too many non-matching blocks
+			if (nonMatchingBlockCount >= config.general.nonMatchingBlocksThreshold) {
+				worldManager.clearBlockStates();
+				resetCounters();
+				requestNewSuggestions(world); // Request new suggestions after clearing all
+				return;
+			}
+		}
+
+		// Request new suggestions if enough blocks have been placed
+		if (placedBlockCount >= config.general.placedBlocksThreshold) {
+			requestNewSuggestions(world);
+			resetCounters();
+		}
+	}
+
+	private void requestNewSuggestions(World world) {
 		httpService.stop();
-
-		// Update block state
-		worldManager.clearBlockState(lastInteractedBlockPos);
-
-		// Send request to server
-		String[][][] matrix = getBlocksMatrix(world, lastInteractedBlockPos);
+		String[][][] matrix = getBlocksMatrix(world, placedBlockPos);
 		httpService.sendRequest(matrix, config.model);
+	}
+
+	private void resetCounters() {
+		placedBlockCount = 0;
+		nonMatchingBlockCount = 0;
 	}
 
 	private void handleClientTick(MinecraftClient client) {
 		ResponseItem item;
 		while ((item = httpService.getNextResponse()) != null) {
-			BlockPos pos = lastInteractedBlockPos.add(item.getX() - 5, item.getY() - 5, item.getZ() - 5);
+			BlockPos pos = placedBlockPos.add(item.getX() - 5, item.getY() - 5, item.getZ() - 5);
 			BlockState blockState = BlockStateHelper.parseBlockState(item.getBlockState());
 			worldManager.setBlockState(pos, blockState);
 		}

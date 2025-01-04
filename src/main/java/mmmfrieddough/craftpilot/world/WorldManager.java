@@ -18,6 +18,11 @@ public class WorldManager implements IWorldManager {
     }
 
     @Override
+    public BlockState getGhostBlockState(BlockPos pos) {
+        return ghostBlocks.get(pos);
+    }
+
+    @Override
     public BlockState getBlockState(World world, BlockPos pos) {
         BlockState ghostState = ghostBlocks.get(pos);
         if (ghostState != null) {
