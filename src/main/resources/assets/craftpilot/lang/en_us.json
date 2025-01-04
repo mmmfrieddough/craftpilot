@@ -1,7 +1,7 @@
 {
-    "key.categories.craftpilot": "CraftPilot",
+    "key.categories.craftpilot": "Craftpilot",
     "key.craftpilot.clear": "Clear Suggestions",
-    "text.autoconfig.craftpilot.title": "CraftPilot",
+    "text.autoconfig.craftpilot.title": "Craftpilot",
     "text.autoconfig.craftpilot.category.General": "General",
     "text.autoconfig.craftpilot.option.general.enable": "Enable",
     "text.autoconfig.craftpilot.option.general.enable.@Tooltip": "Enable the suggestions",

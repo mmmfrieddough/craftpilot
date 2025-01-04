@@ -2,16 +2,16 @@
 	"schemaVersion": 1,
 	"id": "craftpilot",
 	"version": "${version}",
-	"name": "CraftPilot",
+	"name": "Craftpilot",
 	"description": "AI based building assistant.",
 	"authors": [
 		"mmmfrieddough"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/mmmfrieddough/craftpilot",
+		"sources": "https://github.com/mmmfrieddough/craftpilot"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/craftpilot/icon.png",
 	"environment": "client",
 	"entrypoints": {
