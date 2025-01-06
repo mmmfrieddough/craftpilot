@@ -6,6 +6,13 @@ public class ResponseItem {
     private int y;
     private int z;
 
+    public ResponseItem(String blockState, int x, int y, int z) {
+        this.block_state = blockState;
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
     public String getBlockState() {
         return block_state;
     }
