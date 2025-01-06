@@ -16,7 +16,7 @@ public class BlockStateHelper {
         String[] parts = blockStateString.split("\\[", 2);
         String blockId = parts[0];
 
-        Block block = Registries.BLOCK.get(new Identifier(blockId));
+        Block block = Registries.BLOCK.get(Identifier.of(blockId));
         BlockState state = block.getDefaultState();
 
         if (parts.length > 1) {

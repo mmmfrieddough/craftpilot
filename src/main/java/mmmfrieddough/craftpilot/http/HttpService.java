@@ -60,16 +60,17 @@ public class HttpService {
                                 config.serverUrl);
                         LOGGER.error(errorMsg + ": {}", cause.getMessage());
                         MinecraftClient.getInstance().player
-                                .sendMessage(Text.literal(errorMsg).styled(style -> style.withColor(0xFF0000)));
+                                .sendMessage(Text.literal(errorMsg).styled(style -> style.withColor(0xFF0000)), false);
                     } else if (cause instanceof TimeoutException) {
                         String errorMsg = "Request timed out - server may be unresponsive";
                         LOGGER.error(errorMsg);
                         MinecraftClient.getInstance().player
-                                .sendMessage(Text.literal(errorMsg).styled(style -> style.withColor(0xFF0000)));
+                                .sendMessage(Text.literal(errorMsg).styled(style -> style.withColor(0xFF0000)), false);
                     } else {
                         LOGGER.error("Error sending HTTP request", throwable);
                         MinecraftClient.getInstance().player.sendMessage(
-                                Text.literal("Error sending HTTP request").styled(style -> style.withColor(0xFF0000)));
+                                Text.literal("Error sending HTTP request").styled(style -> style.withColor(0xFF0000)),
+                                false);
                     }
                     return null;
                 });

@@ -50,7 +50,7 @@ public class ModConfig implements ConfigData {
         @Tooltip
         public float blockPlacementOpacity = 0.8f;
         @Tooltip
-        public float blockOutlineOpacity = 0.4f;
+        public float blockOutlineOpacity = 0.2f;
     }
 
 }

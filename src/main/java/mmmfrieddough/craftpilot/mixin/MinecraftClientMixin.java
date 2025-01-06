@@ -19,6 +19,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.entity.attribute.EntityAttributes;
 
 @Mixin(MinecraftClient.class)
 public class MinecraftClientMixin {
@@ -30,7 +31,7 @@ public class MinecraftClientMixin {
 
         // Get look vector
         Vec3d cameraPos = camera.getPos();
-        float reach = client.interactionManager.getReachDistance(); // Gets correct reach for game mode
+        float reach = (float) client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
         Vec3d lookVec = Vec3d.fromPolar(camera.getPitch(), camera.getYaw());
         Vec3d endPos = cameraPos.add(lookVec.multiply(reach));
 
@@ -81,7 +82,7 @@ public class MinecraftClientMixin {
         MinecraftClient client = (MinecraftClient) (Object) this;
         Camera camera = client.gameRenderer.getCamera();
         Vec3d cameraPos = camera.getPos();
-        float reach = client.interactionManager.getReachDistance();
+        double reach = client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
         Vec3d lookVec = Vec3d.fromPolar(camera.getPitch(), camera.getYaw());
         Vec3d endPos = cameraPos.add(lookVec.multiply(reach));
 

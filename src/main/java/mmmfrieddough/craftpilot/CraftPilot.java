@@ -43,6 +43,8 @@ public class CraftPilot implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+		LOGGER.info("Initializing Craftpilot");
+
 		instance = this;
 
 		// Set up configuration

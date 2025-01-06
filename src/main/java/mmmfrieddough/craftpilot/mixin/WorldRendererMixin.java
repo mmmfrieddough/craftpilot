@@ -19,24 +19,30 @@ import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.VertexRendering;
 import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.util.ObjectAllocator;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.profiler.Profilers;
 import net.minecraft.util.shape.VoxelShape;
 
 @Mixin(WorldRenderer.class)
 public class WorldRendererMixin {
     @Inject(method = "render", at = @At("RETURN"))
-    private void onRender(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline,
-            Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager,
-            Matrix4f matrix4f, CallbackInfo ci) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        client.getProfiler().push("craftpilot_render");
+    private void onRender(ObjectAllocator objectAllocator, RenderTickCounter renderTickCounter,
+            boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer,
+            LightmapTextureManager lightmapTextureManager, Matrix4f positionMatrix,
+            Matrix4f projectionMatrix, CallbackInfo ci) {
+        Profilers.get().push("craftpilot_render");
 
+        MinecraftClient client = MinecraftClient.getInstance();
         IWorldManager manager = CraftPilot.getInstance().getWorldManager();
         Map<BlockPos, BlockState> ghostBlocks = manager.getGhostBlocks();
+
         // Early return if no blocks to render
         if (ghostBlocks.isEmpty()) {
             return;
@@ -52,9 +58,31 @@ public class WorldRendererMixin {
         // Create vertex consumer once
         VertexConsumerProvider.Immediate immediate = client.getBufferBuilders().getEntityVertexConsumers();
 
-        // First pass: Ghost blocks
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
+
+        // Create a new MatrixStack for our transformations
+        MatrixStack matrices = new MatrixStack();
+        matrices.push();
+        // Apply the position matrix to align with world coordinates
+        matrices.multiplyPositionMatrix(positionMatrix);
+
+        renderGhostBlocks(client, config, ghostBlocks, cameraPos, cameraX, cameraY, cameraZ, renderDistance, matrices,
+                immediate);
+        renderBlockOutlines(client, config, ghostBlocks, cameraPos, cameraX, cameraY, cameraZ, renderDistance, matrices,
+                immediate);
+
+        matrices.pop();
+
+        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+        RenderSystem.disableBlend();
+
+        Profilers.get().pop();
+    }
+
+    private void renderGhostBlocks(MinecraftClient client, ModConfig config, Map<BlockPos, BlockState> ghostBlocks,
+            BlockPos cameraPos, double cameraX, double cameraY, double cameraZ, int renderDistance,
+            MatrixStack matrices, VertexConsumerProvider.Immediate immediate) {
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, config.rendering.blockPlacementOpacity);
 
         VertexConsumer translucentVertices = immediate.getBuffer(RenderLayer.getTranslucent());
@@ -84,8 +112,11 @@ public class WorldRendererMixin {
         }
 
         immediate.draw();
+    }
 
-        // Second pass: Block outlines
+    private void renderBlockOutlines(MinecraftClient client, ModConfig config, Map<BlockPos, BlockState> ghostBlocks,
+            BlockPos cameraPos, double cameraX, double cameraY, double cameraZ, int renderDistance,
+            MatrixStack matrices, VertexConsumerProvider.Immediate immediate) {
         RenderSystem.setShaderColor(0.0f, 1.0f, 1.0f, config.rendering.blockOutlineOpacity);
         RenderSystem.lineWidth(2.0f);
 
@@ -95,30 +126,20 @@ public class WorldRendererMixin {
             BlockPos pos = entry.getKey();
             if (pos.isWithinDistance(cameraPos, renderDistance)) {
                 VoxelShape shape = entry.getValue().getOutlineShape(client.world, pos);
-                double offsetX = pos.getX() - cameraX;
-                double offsetY = pos.getY() - cameraY;
-                double offsetZ = pos.getZ() - cameraZ;
 
                 shape.forEachBox((minX, minY, minZ, maxX, maxY, maxZ) -> {
-                    WorldRenderer.drawBox(
+                    VertexRendering.drawOutline(
                             matrices,
                             lineVertices,
-                            minX + offsetX,
-                            minY + offsetY,
-                            minZ + offsetZ,
-                            maxX + offsetX,
-                            maxY + offsetY,
-                            maxZ + offsetZ,
-                            0.4f, 0.4f, 1.0f, 1.0f);
+                            shape,
+                            pos.getX() - cameraX,
+                            pos.getY() - cameraY,
+                            pos.getZ() - cameraZ,
+                            0xFF66FFFF); // Cyan color in ARGB format
                 });
             }
         }
 
         immediate.draw();
-
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-        RenderSystem.disableBlend();
-
-        client.getProfiler().pop();
     }
 }
