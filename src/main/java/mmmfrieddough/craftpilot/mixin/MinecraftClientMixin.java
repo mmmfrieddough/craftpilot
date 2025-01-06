@@ -1,7 +1,5 @@
 package mmmfrieddough.craftpilot.mixin;
 
-import java.util.Optional;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -9,105 +7,80 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import mmmfrieddough.craftpilot.CraftPilot;
-import mmmfrieddough.craftpilot.world.IWorldManager;
+import mmmfrieddough.craftpilot.service.GhostBlockService;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
-import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.entity.attribute.EntityAttributes;
 
+/**
+ * Mixin to handle ghost block interactions in the Minecraft client.
+ * Provides functionality for picking and breaking ghost blocks.
+ */
 @Mixin(MinecraftClient.class)
 public class MinecraftClientMixin {
-    @SuppressWarnings("resource")
     @Inject(method = "doItemPick", at = @At("HEAD"), cancellable = true)
     private void onDoItemPick(CallbackInfo ci) {
-        MinecraftClient client = (MinecraftClient) (Object) this;
-        Camera camera = client.gameRenderer.getCamera();
-
-        // Get look vector
-        Vec3d cameraPos = camera.getPos();
-        float reach = (float) client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
-        Vec3d lookVec = Vec3d.fromPolar(camera.getPitch(), camera.getYaw());
-        Vec3d endPos = cameraPos.add(lookVec.multiply(reach));
-
-        // Do our own raytrace
-        IWorldManager manager = CraftPilot.getInstance().getWorldManager();
-        BlockPos nearestPos = null;
-        double nearestDist = Double.MAX_VALUE;
-
-        for (BlockPos pos : manager.getGhostBlocks().keySet()) {
-            Box box = new Box(pos);
-            Optional<Vec3d> hit = box.raycast(cameraPos, endPos);
-            if (hit.isPresent()) {
-                double dist = cameraPos.squaredDistanceTo(hit.get());
-                if (dist < nearestDist) {
-                    nearestDist = dist;
-                    nearestPos = pos;
-                }
-            }
+        MinecraftClient client = MinecraftClient.getInstance();
+        GhostBlockTarget target = getGhostBlockTarget();
+        if (target == null) {
+            return;
         }
 
-        if (nearestPos != null) {
-            BlockState ghostState = manager.getGhostBlocks().get(nearestPos);
-            ItemStack stack = ghostState.getBlock().getPickStack(client.world, nearestPos, ghostState);
-            if (!stack.isEmpty()) {
-                PlayerInventory inventory = client.player.getInventory();
-                if (client.player.getAbilities().creativeMode) {
-                    inventory.addPickBlock(stack);
-                    client.interactionManager.clickCreativeStack(client.player.getStackInHand(Hand.MAIN_HAND),
-                            36 + inventory.selectedSlot);
-                } else {
-                    int slot = inventory.getSlotWithStack(stack);
-                    if (slot != -1) {
-                        if (PlayerInventory.isValidHotbarIndex(slot)) {
-                            inventory.selectedSlot = slot;
-                        } else {
-                            client.interactionManager.pickFromInventory(slot);
-                        }
-                    }
-                }
-                ci.cancel();
-            }
+        ItemStack stack = target.state().getBlock().getPickStack(client.world, target.pos(), target.state());
+        if (!stack.isEmpty()) {
+            int slot = GhostBlockService.handleInventoryPick(
+                    client.player.getInventory(),
+                    stack,
+                    client.player.getAbilities().creativeMode,
+                    client.player.getStackInHand(Hand.MAIN_HAND));
+            GhostBlockService.executeInventoryPick(client, slot, client.player.getAbilities().creativeMode);
         }
     }
 
-    @SuppressWarnings("resource")
     @Inject(method = "doAttack", at = @At("HEAD"), cancellable = true)
     private void onDoAttack(CallbackInfoReturnable<Boolean> cir) {
-        MinecraftClient client = (MinecraftClient) (Object) this;
+        MinecraftClient client = MinecraftClient.getInstance();
+        GhostBlockTarget target = getGhostBlockTarget();
+        if (target == null) {
+            return;
+        }
+
+        // Handle breaking the ghost block
+        CraftPilot.getInstance().getWorldManager().clearBlockState(target.pos());
+        client.player.swingHand(Hand.MAIN_HAND);
+        cir.setReturnValue(true);
+    }
+
+    private record GhostBlockTarget(BlockPos pos, BlockState state) {
+    }
+
+    /**
+     * Gets the ghost block the player is currently looking at
+     * 
+     * @return Target information, or null if no valid target
+     */
+    private GhostBlockTarget getGhostBlockTarget() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.player == null || client.world == null || client.gameRenderer == null) {
+            return null;
+        }
+
         Camera camera = client.gameRenderer.getCamera();
-        Vec3d cameraPos = camera.getPos();
-        double reach = client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
         Vec3d lookVec = Vec3d.fromPolar(camera.getPitch(), camera.getYaw());
-        Vec3d endPos = cameraPos.add(lookVec.multiply(reach));
+        double reach = client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
 
-        // Do raytrace for ghost blocks
-        IWorldManager manager = CraftPilot.getInstance().getWorldManager();
-        BlockPos nearestPos = null;
-        double nearestDist = Double.MAX_VALUE;
-
-        for (BlockPos pos : manager.getGhostBlocks().keySet()) {
-            Box box = new Box(pos);
-            Optional<Vec3d> hit = box.raycast(cameraPos, endPos);
-            if (hit.isPresent()) {
-                double dist = cameraPos.squaredDistanceTo(hit.get());
-                if (dist < nearestDist) {
-                    nearestDist = dist;
-                    nearestPos = pos;
-                }
-            }
+        BlockPos targetPos = GhostBlockService.findTargetedGhostBlock(
+                CraftPilot.getInstance().getWorldManager().getGhostBlocks(), camera.getPos(), lookVec, reach);
+        if (targetPos == null) {
+            return null;
         }
 
-        // Remove the ghost block if we hit one
-        if (nearestPos != null) {
-            manager.clearBlockState(nearestPos);
-            client.player.swingHand(Hand.MAIN_HAND);
-            cir.setReturnValue(true);
-        }
+        BlockState ghostState = CraftPilot.getInstance().getWorldManager().getGhostBlocks().get(targetPos);
+        return new GhostBlockTarget(targetPos, ghostState);
     }
 }

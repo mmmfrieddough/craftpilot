@@ -30,6 +30,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.profiler.Profilers;
 import net.minecraft.util.shape.VoxelShape;
 
+import mmmfrieddough.craftpilot.service.GhostBlockRenderService;
+
 @Mixin(WorldRenderer.class)
 public class WorldRendererMixin {
     @Inject(method = "render", at = @At("RETURN"))
@@ -67,10 +69,15 @@ public class WorldRendererMixin {
         // Apply the position matrix to align with world coordinates
         matrices.multiplyPositionMatrix(positionMatrix);
 
-        renderGhostBlocks(client, config, ghostBlocks, cameraPos, cameraX, cameraY, cameraZ, renderDistance, matrices,
-                immediate);
-        renderBlockOutlines(client, config, ghostBlocks, cameraPos, cameraX, cameraY, cameraZ, renderDistance, matrices,
-                immediate);
+        GhostBlockRenderService.renderGhostBlocks(
+                client, ghostBlocks, cameraPos, cameraX, cameraY, cameraZ,
+                renderDistance, config.rendering.blockPlacementOpacity,
+                matrices, immediate);
+
+        GhostBlockRenderService.renderBlockOutlines(
+                client, ghostBlocks, cameraPos, cameraX, cameraY, cameraZ,
+                renderDistance, config.rendering.blockOutlineOpacity,
+                matrices, immediate);
 
         matrices.pop();
 
@@ -78,68 +85,5 @@ public class WorldRendererMixin {
         RenderSystem.disableBlend();
 
         Profilers.get().pop();
-    }
-
-    private void renderGhostBlocks(MinecraftClient client, ModConfig config, Map<BlockPos, BlockState> ghostBlocks,
-            BlockPos cameraPos, double cameraX, double cameraY, double cameraZ, int renderDistance,
-            MatrixStack matrices, VertexConsumerProvider.Immediate immediate) {
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, config.rendering.blockPlacementOpacity);
-
-        VertexConsumer translucentVertices = immediate.getBuffer(RenderLayer.getTranslucent());
-
-        // Render ghost blocks
-        for (Map.Entry<BlockPos, BlockState> entry : ghostBlocks.entrySet()) {
-            BlockPos pos = entry.getKey();
-            // Only render blocks within view distance
-            if (pos.isWithinDistance(cameraPos, renderDistance)) {
-                matrices.push();
-                matrices.translate(
-                        pos.getX() - cameraX,
-                        pos.getY() - cameraY,
-                        pos.getZ() - cameraZ);
-
-                client.getBlockRenderManager().renderBlock(
-                        entry.getValue(),
-                        pos,
-                        client.world,
-                        matrices,
-                        translucentVertices,
-                        false,
-                        client.world.random);
-
-                matrices.pop();
-            }
-        }
-
-        immediate.draw();
-    }
-
-    private void renderBlockOutlines(MinecraftClient client, ModConfig config, Map<BlockPos, BlockState> ghostBlocks,
-            BlockPos cameraPos, double cameraX, double cameraY, double cameraZ, int renderDistance,
-            MatrixStack matrices, VertexConsumerProvider.Immediate immediate) {
-        RenderSystem.setShaderColor(0.0f, 1.0f, 1.0f, config.rendering.blockOutlineOpacity);
-        RenderSystem.lineWidth(2.0f);
-
-        VertexConsumer lineVertices = immediate.getBuffer(RenderLayer.getLines());
-
-        for (Map.Entry<BlockPos, BlockState> entry : ghostBlocks.entrySet()) {
-            BlockPos pos = entry.getKey();
-            if (pos.isWithinDistance(cameraPos, renderDistance)) {
-                VoxelShape shape = entry.getValue().getOutlineShape(client.world, pos);
-
-                shape.forEachBox((minX, minY, minZ, maxX, maxY, maxZ) -> {
-                    VertexRendering.drawOutline(
-                            matrices,
-                            lineVertices,
-                            shape,
-                            pos.getX() - cameraX,
-                            pos.getY() - cameraY,
-                            pos.getZ() - cameraZ,
-                            0xFF66FFFF); // Cyan color in ARGB format
-                });
-            }
-        }
-
-        immediate.draw();
     }
 }
