@@ -25,8 +25,8 @@ jobs:
       - name: Extract versions
         id: mod_version
         run: |
-          echo "VERSION=$(./gradlew properties | grep "version:" | cut -d' ' -f2)" >> $GITHUB_OUTPUT
-          echo "MC_VERSION=$(./gradlew properties | grep "minecraft_version=" | cut -d'=' -f2)" >> $GITHUB_OUTPUT
+          echo "VERSION=$(./gradlew properties | grep "^mod_version:" | cut -d' ' -f2)" >> $GITHUB_OUTPUT
+          echo "MC_VERSION=$(./gradlew properties | grep "^minecraft_version=" | cut -d'=' -f2)" >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
