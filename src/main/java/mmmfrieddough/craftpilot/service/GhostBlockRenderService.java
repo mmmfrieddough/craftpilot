@@ -4,7 +4,6 @@ import java.util.Map;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 
-import mmmfrieddough.craftpilot.config.ModConfig;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;

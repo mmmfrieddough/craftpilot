@@ -12,25 +12,20 @@ import com.mojang.blaze3d.systems.RenderSystem;
 
 import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.config.ModConfig;
+import mmmfrieddough.craftpilot.service.GhostBlockRenderService;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.VertexRendering;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.ObjectAllocator;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.profiler.Profilers;
-import net.minecraft.util.shape.VoxelShape;
-
-import mmmfrieddough.craftpilot.service.GhostBlockRenderService;
 
 @Mixin(WorldRenderer.class)
 public class WorldRendererMixin {
