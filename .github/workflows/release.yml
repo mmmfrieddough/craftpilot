@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+          cache: "gradle"
+
+      - name: Build
+        run: ./gradlew build
+
+      - name: Extract versions
+        id: mod_version
+        run: |
+          echo "VERSION=$(./gradlew properties | grep "version:" | cut -d' ' -f2)" >> $GITHUB_OUTPUT
+          echo "MC_VERSION=$(./gradlew properties | grep "minecraft_version=" | cut -d'=' -f2)" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/libs/*
+          tag_name: v${{ steps.mod_version.outputs.VERSION }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    #   - name: Publish to Modrinth
+    #     uses: Kir-Antipov/mc-publish@v3.3
+    #     with:
+    #       modrinth-id: YOUR_MODRINTH_PROJECT_ID
+    #       modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+
+    #       files: build/libs/!(*-@(dev|sources)).jar
+    #       version-type: release
+    #       version: ${{ steps.mod_version.outputs.VERSION }}
+
+    #       loaders: fabric
+    #       game-versions: ${{ steps.mod_version.outputs.MC_VERSION }}
+    #       java: 21
+
+    #   - name: Publish to CurseForge
+    #     uses: Kir-Antipov/mc-publish@v3.3
+    #     with:
+    #       curseforge-id: YOUR_CURSEFORGE_PROJECT_ID
+    #       curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+
+    #       files: build/libs/!(*-@(dev|sources)).jar
+    #       version-type: release
+    #       version: ${{ steps.mod_version.outputs.VERSION }}
+
+    #       loaders: fabric
+    #       game-versions: ${{ steps.mod_version.outputs.MC_VERSION }}
+    #       java: 21
