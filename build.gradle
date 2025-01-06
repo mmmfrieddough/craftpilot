@@ -34,6 +34,10 @@ dependencies {
 
 	modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
 	modImplementation "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}"
+
+	testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
+	testImplementation 'org.mockito:mockito-core:5.3.1'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.3.1'
 }
 
 processResources {
@@ -79,4 +83,8 @@ publishing {
 		// The repositories here will be used for publishing your artifact, not for
 		// retrieving dependencies.
 	}
+}
+
+test {
+    useJUnitPlatform()
 }
