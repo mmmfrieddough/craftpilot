@@ -6,6 +6,10 @@
 
 Craftpilot is your personal building assistant in Minecraft. As you build, it provides relevant suggestions through an easy-to-use overlay. Whether you're seeking inspiration for new structures or struggling with complex details, Craftpilot helps bring your creative vision to life. The assistant supports a wide variety of building styles and block palettes, making it a versatile tool for any Minecraft builder.
 
+<p align="center">
+  <img src="showcase1.gif" alt="Craftpilot Main Demo" width="600">
+</p>
+
 ## Setup
 
 Craftpilot requires a companion program that runs the ML model. Here's how to get started:
@@ -27,6 +31,10 @@ Craftpilot requires a companion program that runs the ML model. Here's how to ge
 
    - Place any block to begin a new build or continue an existing one
    - Craftpilot will display suggested blocks as a transparent overlay
+
+<p align="center">
+  <img src="showcase2.gif" alt="Craftpilot Main Demo" width="600">
+</p>
 
 2. **Working with Suggestions**
 
