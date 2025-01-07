@@ -18,6 +18,7 @@ Craftpilot requires a companion program that runs the ML model. Here's how to ge
 
 1. Download the latest release from the [releases page](https://github.com/mmmfrieddough/minecraft-schematic-generator/releases)
 2. Run the companion program
+   > ⚠️ **Note**: The ML model requires a modern GPU (NVIDIA recommended) for optimal performance. Without one, generation times may be significantly slower.
 3. Start Minecraft - Craftpilot will automatically connect to the local instance
 
 ### Alternative Setup Options
