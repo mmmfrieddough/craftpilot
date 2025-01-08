@@ -26,13 +26,14 @@
 		"craftpilot.mixins.json"
 	],
 	"depends": {
-		"minecraft": ">=${minecraft_version}",
-		"fabricloader": ">=${loader_version}",
-		"fabric-api": ">=fabric_version",
-		"cloth-config": ">=${cloth_config_version}"
+		"java": ">=21",
+		"minecraft": ">=1.21.3",
+		"fabricloader": ">=0.16.9",
+		"fabric-api": ">=0.114.0",
+		"cloth-config": ">=16.0.143"
 	},
 	"suggests": {
-		"modmenu": ">=${modmenu_version}"
+		"modmenu": ">=12.0.0"
 	},
 	"custom": {
 		"mc-publish": {
