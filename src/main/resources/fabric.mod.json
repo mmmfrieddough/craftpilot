@@ -40,6 +40,7 @@
 			"loaders": [
 				"fabric"
 			],
+			"modrinth": "ts4PA6el",
 			"curseforge": 1174507
 		}
 	}
