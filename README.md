@@ -4,6 +4,12 @@
 
 # Craftpilot
 
+[![Release](https://img.shields.io/github/v/release/mmmfrieddough/craftpilot?include_prereleases)](https://github.com/mmmfrieddough/craftpilot/releases)
+[![Build Status](https://github.com/mmmfrieddough/craftpilot/actions/workflows/release.yml/badge.svg)](https://github.com/mmmfrieddough/craftpilot/actions)
+[![Modrinth](https://img.shields.io/modrinth/dt/craftpilot?logo=modrinth)](https://modrinth.com/mod/craftpilot)
+[![CurseForge](https://img.shields.io/curseforge/dt/craftpilot?logo=curseforge)](https://www.curseforge.com/minecraft/mc-mods/craftpilot)
+[![License](https://img.shields.io/github/license/mmmfrieddough/craftpilot)](LICENSE)
+
 Craftpilot is your personal building assistant in Minecraft. As you build, it provides relevant suggestions through an easy-to-use overlay. Whether you're seeking inspiration for new structures or struggling with complex details, Craftpilot helps bring your creative vision to life. The assistant supports a wide variety of building styles and block palettes, making it a versatile tool for any Minecraft builder.
 
 <p align="center">
