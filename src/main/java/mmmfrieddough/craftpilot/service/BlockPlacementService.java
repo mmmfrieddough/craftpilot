@@ -126,6 +126,9 @@ public class BlockPlacementService {
     private void processResponse(ResponseItem item) {
         BlockPos pos = calculateResponsePosition(item);
         BlockState blockState = BlockStateHelper.parseBlockState(item.getBlockState());
+        if (blockState.isAir()) {
+            return;
+        }
         worldManager.setBlockState(pos, blockState);
     }
 
