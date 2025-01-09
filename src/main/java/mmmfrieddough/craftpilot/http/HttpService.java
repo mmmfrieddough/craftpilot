@@ -21,6 +21,7 @@ import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import net.minecraft.text.Text;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.ClickEvent;
 
 public class HttpService {
     private static final Logger LOGGER = CraftPilot.LOGGER;
@@ -56,11 +57,20 @@ public class HttpService {
                 .exceptionally(throwable -> {
                     Throwable cause = throwable.getCause();
                     if (cause instanceof ConnectException) {
-                        String errorMsg = String.format("Server %s appears to be offline or unreachable",
-                                config.serverUrl);
-                        LOGGER.error(errorMsg + ": {}", cause.getMessage());
-                        MinecraftClient.getInstance().player
-                                .sendMessage(Text.literal(errorMsg).styled(style -> style.withColor(0xFF0000)), false);
+                        String setupUrl = "https://github.com/mmmfrieddough/craftpilot#setup";
+                        Text message = Text
+                                .literal("URL " + config.serverUrl + " appears to be offline or unreachable.\n")
+                                .styled(style -> style.withColor(0xFF0000))
+                                .append(Text.literal("Make sure you've installed and started the companion program!\n")
+                                        .styled(style -> style.withColor(0xFF0000)))
+                                .append(Text.literal("Click here for setup instructions")
+                                        .styled(style -> style
+                                                .withColor(0xFF0000)
+                                                .withUnderline(true)
+                                                .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, setupUrl))));
+
+                        LOGGER.error("Server connection failed: {}", cause.getMessage());
+                        MinecraftClient.getInstance().player.sendMessage(message, false);
                     } else if (cause instanceof TimeoutException) {
                         String errorMsg = "Request timed out - server may be unresponsive";
                         LOGGER.error(errorMsg);
