@@ -2,6 +2,8 @@ package mmmfrieddough.craftpilot.service;
 
 import java.util.Map;
 
+import org.lwjgl.opengl.GL11;
+
 import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.minecraft.block.BlockState;
@@ -81,6 +83,13 @@ public final class GhostBlockRenderService {
         RenderSystem.setShaderColor(0.0f, 1.0f, 1.0f, opacity);
         RenderSystem.lineWidth(2.0f);
 
+        // Address Z-fighting issues with vanilla block outlines
+        RenderSystem.enableDepthTest();
+        RenderSystem.depthFunc(GL11.GL_LESS);
+        RenderSystem.polygonOffset(-1.0f, -3.0f);
+
+        RenderSystem.enablePolygonOffset();
+
         VertexConsumer lineVertices = immediate.getBuffer(RenderLayer.getLines());
 
         for (Map.Entry<BlockPos, BlockState> entry : ghostBlocks.entrySet()) {
@@ -102,5 +111,9 @@ public final class GhostBlockRenderService {
         }
 
         immediate.draw();
+
+        RenderSystem.polygonOffset(0.0f, 0.0f);
+        RenderSystem.disablePolygonOffset();
+        RenderSystem.depthFunc(GL11.GL_LEQUAL);
     }
 }
