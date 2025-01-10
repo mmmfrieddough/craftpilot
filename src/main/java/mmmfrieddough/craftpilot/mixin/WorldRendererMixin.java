@@ -18,7 +18,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
@@ -32,8 +31,7 @@ public class WorldRendererMixin {
     @Inject(method = "render", at = @At("RETURN"))
     private void onRender(ObjectAllocator objectAllocator, RenderTickCounter renderTickCounter,
             boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer,
-            LightmapTextureManager lightmapTextureManager, Matrix4f positionMatrix,
-            Matrix4f projectionMatrix, CallbackInfo ci) {
+            Matrix4f positionMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
         Profilers.get().push("craftpilot_render");
 
         MinecraftClient client = MinecraftClient.getInstance();
