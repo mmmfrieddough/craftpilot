@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import mmmfrieddough.craftpilot.world.IWorldManager;
-import mmmfrieddough.craftpilot.world.WorldManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
