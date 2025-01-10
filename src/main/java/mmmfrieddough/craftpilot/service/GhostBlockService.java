@@ -1,7 +1,6 @@
 package mmmfrieddough.craftpilot.service;
 
 import java.util.Map;
-import java.util.Optional;
 
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.block.BlockState;
@@ -11,9 +10,11 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.shape.VoxelShape;
 
 public final class GhostBlockService {
     public record GhostBlockTarget(BlockPos pos, BlockState state) {
@@ -36,8 +37,8 @@ public final class GhostBlockService {
      * @return true if a ghost block was successfully picked, false otherwise
      */
     public static boolean handleGhostBlockPick(IWorldManager worldManager, Camera camera, double reach,
-            FeatureSet enabledFeatures, boolean creativeMode, PlayerInventory inventory) {
-        GhostBlockTarget target = getGhostBlockTarget(worldManager, camera, reach);
+            FeatureSet enabledFeatures, boolean creativeMode, PlayerInventory inventory, HitResult vanillaTarget) {
+        GhostBlockTarget target = getGhostBlockTarget(worldManager, camera, reach, vanillaTarget);
         if (target == null) {
             return false;
         }
@@ -56,8 +57,8 @@ public final class GhostBlockService {
      * @return true if a ghost block was successfully broken, false otherwise
      */
     public static boolean handleGhostBlockBreak(IWorldManager worldManager, Camera camera, double reach,
-            ClientPlayerEntity player) {
-        GhostBlockTarget target = getGhostBlockTarget(worldManager, camera, reach);
+            ClientPlayerEntity player, HitResult vanillaTarget) {
+        GhostBlockTarget target = getGhostBlockTarget(worldManager, camera, reach, vanillaTarget);
         if (target == null) {
             return false;
         }
@@ -79,21 +80,27 @@ public final class GhostBlockService {
      * @return The position of the nearest ghost block hit by the raycast, or null
      *         if none found
      */
-    private static BlockPos findTargetedGhostBlock(Map<BlockPos, BlockState> ghostBlocks, Vec3d cameraPos,
-            Vec3d lookVec, double reach) {
+    public static BlockPos findTargetedGhostBlock(Map<BlockPos, BlockState> ghostBlocks, Vec3d cameraPos, Vec3d lookVec,
+            double reach, HitResult vanillaTarget) {
         if (ghostBlocks.isEmpty()) {
             return null;
         }
 
-        Vec3d endPos = cameraPos.add(lookVec.multiply(reach));
+        // Calculate the starting nearest distance
+        double nearestDist = vanillaTarget.getType() != HitResult.Type.MISS
+                ? cameraPos.squaredDistanceTo(vanillaTarget.getPos())
+                : reach * reach;
+
         BlockPos nearestPos = null;
-        double nearestDist = Double.MAX_VALUE;
+        Vec3d endPos = cameraPos.add(lookVec.multiply(reach));
 
         for (BlockPos pos : ghostBlocks.keySet()) {
-            Box box = new Box(pos);
-            Optional<Vec3d> hit = box.raycast(cameraPos, endPos);
-            if (hit.isPresent()) {
-                double dist = cameraPos.squaredDistanceTo(hit.get());
+            BlockState state = ghostBlocks.get(pos);
+            VoxelShape shape = state.getOutlineShape(null, pos);
+            BlockHitResult hitResult = shape.raycast(cameraPos, endPos, pos);
+
+            if (hitResult != null && hitResult.getType() != HitResult.Type.MISS) {
+                double dist = cameraPos.squaredDistanceTo(hitResult.getPos());
                 if (dist < nearestDist) {
                     nearestDist = dist;
                     nearestPos = pos;
@@ -149,14 +156,15 @@ public final class GhostBlockService {
      *         block,
      *         or null if no ghost block is being targeted
      */
-    private static GhostBlockTarget getGhostBlockTarget(IWorldManager worldManager, Camera camera, double reach) {
-        Vec3d lookVec = Vec3d.fromPolar(camera.getPitch(), camera.getYaw());
+    private static GhostBlockTarget getGhostBlockTarget(IWorldManager worldManager, Camera camera, double reach,
+            HitResult vanillaTarget) {
+        Vec3d cameraPos = camera.getPos();
+        Vec3d rotationVec = camera.getFocusedEntity().getRotationVec(1.0f);
 
-        BlockPos targetPos = findTargetedGhostBlock(
-                worldManager.getGhostBlocks(),
-                camera.getPos(),
-                lookVec,
-                reach);
+        // Find nearest ghost block using ray casting
+        BlockPos targetPos = findTargetedGhostBlock(worldManager.getGhostBlocks(), cameraPos, rotationVec, reach,
+                vanillaTarget);
+
         if (targetPos == null) {
             return null;
         }

@@ -15,6 +15,7 @@ import net.minecraft.client.render.Camera;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.resource.featuretoggle.FeatureSet;
+import net.minecraft.util.hit.HitResult;
 
 /**
  * Mixin to handle ghost block interactions in the Minecraft client.
@@ -33,9 +34,10 @@ public class MinecraftClientMixin {
         FeatureSet enabledFeatures = client.player.getWorld().getEnabledFeatures();
         boolean creativeMode = client.interactionManager.getCurrentGameMode().isCreative();
         PlayerInventory inventory = client.player.getInventory();
+        HitResult vanillaTarget = client.crosshairTarget;
 
         if (GhostBlockService.handleGhostBlockPick(worldManager, camera, reach, enabledFeatures, creativeMode,
-                inventory)) {
+                inventory, vanillaTarget)) {
             ci.cancel();
         }
     }
@@ -48,8 +50,9 @@ public class MinecraftClientMixin {
         Camera camera = client.gameRenderer.getCamera();
         double reach = client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
         ClientPlayerEntity player = client.player;
+        HitResult vanillaTarget = client.crosshairTarget;
 
-        if (GhostBlockService.handleGhostBlockBreak(worldManager, camera, reach, player)) {
+        if (GhostBlockService.handleGhostBlockBreak(worldManager, camera, reach, player, vanillaTarget)) {
             cir.setReturnValue(true);
         }
     }

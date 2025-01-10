@@ -34,9 +34,11 @@ import net.minecraft.client.render.Camera;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import net.minecraft.util.shape.VoxelShapes;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -61,6 +63,10 @@ class GhostBlockServiceTest {
     private Camera camera;
     @Mock
     private IWorldManager worldManager;
+    @Mock
+    private HitResult vanillaTarget;
+    @Mock
+    private ClientPlayerEntity focusedEntity;
 
     private Map<BlockPos, BlockState> ghostBlocks;
 
@@ -77,6 +83,7 @@ class GhostBlockServiceTest {
         when(player.getInventory()).thenReturn(inventory);
         when(player.getWorld()).thenReturn(world);
         when(world.getEnabledFeatures()).thenReturn(null);
+        when(vanillaTarget.getType()).thenReturn(HitResult.Type.MISS);
 
         // Block/item chain setup
         when(state.getBlock()).thenReturn(block);
@@ -84,11 +91,12 @@ class GhostBlockServiceTest {
         when(item.getDefaultStack()).thenReturn(stack);
         when(stack.isEmpty()).thenReturn(false);
         when(stack.isItemEnabled(any())).thenReturn(true);
+        when(state.getOutlineShape(any(), any())).thenReturn(VoxelShapes.fullCube());
 
         // Camera setup - looking straight ahead along positive X axis by default
         when(camera.getPos()).thenReturn(new Vec3d(0, 0, 0));
-        when(camera.getPitch()).thenReturn(0f); // 0 = looking straight ahead
-        when(camera.getYaw()).thenReturn(270f); // 270 = looking along positive X axis
+        when(camera.getFocusedEntity()).thenReturn(focusedEntity);
+        when(focusedEntity.getRotationVec(1.0f)).thenReturn(new Vec3d(1, 0, 0));
 
         // World manager setup
         ghostBlocks = new HashMap<>();
@@ -99,8 +107,8 @@ class GhostBlockServiceTest {
     class BasicPickingTests {
         @Test
         void givenNoGhostBlocks_whenPicking_thenNoAction() {
-            boolean result = GhostBlockService.handleGhostBlockPick(
-                    worldManager, camera, 5.0, null, true, inventory);
+            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
+                    vanillaTarget);
 
             assertFalse(result);
             verify(inventory, never()).swapStackWithHotbar(any());
@@ -112,8 +120,8 @@ class GhostBlockServiceTest {
             ghostBlocks.put(new BlockPos(1, 0, 0), state);
             when(inventory.getSlotWithStack(stack)).thenReturn(-1);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(
-                    worldManager, camera, 5.0, null, true, inventory);
+            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
+                    vanillaTarget);
 
             assertTrue(result);
             verify(inventory).swapStackWithHotbar(stack);
@@ -121,14 +129,13 @@ class GhostBlockServiceTest {
 
         @Test
         void givenGhostBlock_whenLookingAway_thenNoAction() {
-            ghostBlocks.put(new BlockPos(0, 0, 0), state);
+            ghostBlocks.put(new BlockPos(1, 0, 0), state);
 
             // Looking straight up instead of ahead
-            when(camera.getPitch()).thenReturn(-90f); // -90 = looking straight up
-            when(camera.getYaw()).thenReturn(270f); // yaw doesn't matter when looking straight up
+            when(focusedEntity.getRotationVec(1.0f)).thenReturn(new Vec3d(0, 1, 0));
 
-            boolean result = GhostBlockService.handleGhostBlockPick(
-                    worldManager, camera, 5.0, null, true, inventory);
+            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
+                    vanillaTarget);
 
             assertFalse(result);
             verify(inventory, never()).swapStackWithHotbar(any());
@@ -138,8 +145,8 @@ class GhostBlockServiceTest {
         void givenDistantGhostBlock_whenPicking_thenNoAction() {
             ghostBlocks.put(new BlockPos(10, 0, 0), state);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(
-                    worldManager, camera, 5.0, null, true, inventory);
+            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
+                    vanillaTarget);
 
             assertFalse(result);
             verify(inventory, never()).swapStackWithHotbar(any());
@@ -154,7 +161,8 @@ class GhostBlockServiceTest {
 
             when(inventory.getSlotWithStack(stack)).thenReturn(-1);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory);
+            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
+                    vanillaTarget);
 
             assertTrue(result);
             verify(inventory).swapStackWithHotbar(stack);
@@ -168,8 +176,8 @@ class GhostBlockServiceTest {
             ghostBlocks.put(new BlockPos(1, 0, 0), state);
             when(inventory.getSlotWithStack(stack)).thenReturn(0);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(
-                    worldManager, camera, 5.0, null, true, inventory);
+            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
+                    vanillaTarget);
 
             assertTrue(result);
             assertEquals(0, inventory.selectedSlot);
@@ -182,8 +190,8 @@ class GhostBlockServiceTest {
             ghostBlocks.put(new BlockPos(1, 0, 0), state);
             when(inventory.getSlotWithStack(stack)).thenReturn(9);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(
-                    worldManager, camera, 5.0, null, true, inventory);
+            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
+                    vanillaTarget);
 
             assertTrue(result);
             verify(inventory).swapSlotWithHotbar(9);
@@ -197,8 +205,8 @@ class GhostBlockServiceTest {
         void givenNegativeReach_whenPicking_thenNoAction() {
             ghostBlocks.put(new BlockPos(1, 0, 0), state);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(
-                    worldManager, camera, -1.0, null, true, inventory);
+            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, -1.0, null, true, inventory,
+                    vanillaTarget);
 
             assertFalse(result);
             verify(inventory, never()).swapStackWithHotbar(any());
@@ -209,8 +217,8 @@ class GhostBlockServiceTest {
             ghostBlocks.put(new BlockPos(1, 0, 0), state);
             when(stack.isItemEnabled(any())).thenReturn(false);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(
-                    worldManager, camera, 5.0, null, true, inventory);
+            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
+                    vanillaTarget);
 
             assertTrue(result); // Method still returns true as block was found
             verify(inventory, never()).swapStackWithHotbar(any());
@@ -221,8 +229,8 @@ class GhostBlockServiceTest {
             ghostBlocks.put(new BlockPos(1, 0, 0), state);
             when(stack.isEmpty()).thenReturn(true);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(
-                    worldManager, camera, 5.0, null, true, inventory);
+            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
+                    vanillaTarget);
 
             assertTrue(result); // Method still returns true as block was found
             verify(inventory, never()).swapStackWithHotbar(any());

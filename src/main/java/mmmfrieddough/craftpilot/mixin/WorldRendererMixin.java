@@ -13,17 +13,23 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import mmmfrieddough.craftpilot.service.GhostBlockRenderService;
+import mmmfrieddough.craftpilot.service.GhostBlockService;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.ObjectAllocator;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.profiler.Profilers;
 
 @Mixin(WorldRenderer.class)
@@ -78,5 +84,33 @@ public class WorldRendererMixin {
         RenderSystem.disableBlend();
 
         Profilers.get().pop();
+    }
+
+    @Inject(method = "drawBlockOutline", at = @At("HEAD"), cancellable = true)
+    private void onDrawBlockOutline(MatrixStack matrices, VertexConsumer vertexConsumer, Entity entity, double cameraX,
+            double cameraY, double cameraZ, BlockPos blockPos, BlockState blockState, int i, CallbackInfo ci) {
+        // Get ghost blocks
+        IWorldManager manager = CraftPilot.getInstance().getWorldManager();
+        Map<BlockPos, BlockState> ghostBlocks = manager.getGhostBlocks();
+
+        // Early return if no blocks to check
+        if (ghostBlocks.isEmpty()) {
+            return;
+        }
+
+        // Check if there's a ghost block in front of the target
+        MinecraftClient client = MinecraftClient.getInstance();
+        Camera camera = client.gameRenderer.getCamera();
+        Vec3d cameraPos = camera.getPos();
+        Vec3d lookVec = Vec3d.fromPolar(camera.getPitch(), camera.getYaw());
+        double reach = client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
+        HitResult vanillaTarget = client.crosshairTarget;
+
+        BlockPos ghostTarget = GhostBlockService.findTargetedGhostBlock(ghostBlocks, cameraPos, lookVec, reach,
+                vanillaTarget);
+        if (ghostTarget != null) {
+            // If there's a ghost block being targeted, cancel the vanilla outline
+            ci.cancel();
+        }
     }
 }
