@@ -6,7 +6,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.service.GhostBlockService;
+import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
@@ -24,6 +26,7 @@ public class MinecraftClientMixin {
     @Inject(method = "doItemPick", at = @At("HEAD"), cancellable = true)
     private void onDoItemPick(CallbackInfo ci) {
         // Extract necessary information
+        IWorldManager worldManager = CraftPilot.getInstance().getWorldManager();
         MinecraftClient client = MinecraftClient.getInstance();
         Camera camera = client.gameRenderer.getCamera();
         double reach = client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
@@ -31,7 +34,8 @@ public class MinecraftClientMixin {
         boolean creativeMode = client.interactionManager.getCurrentGameMode().isCreative();
         PlayerInventory inventory = client.player.getInventory();
 
-        if (GhostBlockService.handleGhostBlockPick(camera, reach, enabledFeatures, creativeMode, inventory)) {
+        if (GhostBlockService.handleGhostBlockPick(worldManager, camera, reach, enabledFeatures, creativeMode,
+                inventory)) {
             ci.cancel();
         }
     }
@@ -39,12 +43,13 @@ public class MinecraftClientMixin {
     @Inject(method = "doAttack", at = @At("HEAD"), cancellable = true)
     private void onDoAttack(CallbackInfoReturnable<Boolean> cir) {
         // Extract necessary information
+        IWorldManager worldManager = CraftPilot.getInstance().getWorldManager();
         MinecraftClient client = MinecraftClient.getInstance();
         Camera camera = client.gameRenderer.getCamera();
         double reach = client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
         ClientPlayerEntity player = client.player;
 
-        if (GhostBlockService.handleGhostBlockBreak(camera, reach, player)) {
+        if (GhostBlockService.handleGhostBlockBreak(worldManager, camera, reach, player)) {
             cir.setReturnValue(true);
         }
     }

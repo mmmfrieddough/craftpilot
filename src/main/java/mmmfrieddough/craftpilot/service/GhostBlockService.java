@@ -3,7 +3,8 @@ package mmmfrieddough.craftpilot.service;
 import java.util.Map;
 import java.util.Optional;
 
-import mmmfrieddough.craftpilot.CraftPilot;
+import mmmfrieddough.craftpilot.world.IWorldManager;
+import mmmfrieddough.craftpilot.world.WorldManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
@@ -24,18 +25,20 @@ public final class GhostBlockService {
     }
 
     /**
-     * Handles ghost block picking interaction
+     * Handles ghost block picking interaction by selecting or adding the targeted
+     * block to inventory
      * 
+     * @param worldManager    Manager handling ghost block state and interactions
      * @param camera          Camera instance providing position and view direction
-     * @param reach           Maximum interaction range
+     * @param reach           Maximum interaction range in blocks
      * @param enabledFeatures Set of enabled game features
      * @param creativeMode    Whether the player is in creative mode
      * @param inventory       Player's inventory
-     * @return true if a ghost block was picked, false otherwise
+     * @return true if a ghost block was successfully picked, false otherwise
      */
-    public static boolean handleGhostBlockPick(Camera camera, double reach, FeatureSet enabledFeatures,
-            boolean creativeMode, PlayerInventory inventory) {
-        GhostBlockTarget target = getGhostBlockTarget(camera, reach);
+    public static boolean handleGhostBlockPick(IWorldManager worldManager, Camera camera, double reach,
+            FeatureSet enabledFeatures, boolean creativeMode, PlayerInventory inventory) {
+        GhostBlockTarget target = getGhostBlockTarget(worldManager, camera, reach);
         if (target == null) {
             return false;
         }
@@ -45,32 +48,37 @@ public final class GhostBlockService {
     }
 
     /**
-     * Handles ghost block breaking interaction
+     * Handles ghost block breaking interaction by removing the targeted ghost block
      * 
-     * @param camera Camera instance providing position and view direction
-     * @param reach  Maximum interaction range
-     * @param player The client player entity
-     * @return true if a ghost block was broken, false otherwise
+     * @param worldManager Manager handling ghost block state and interactions
+     * @param camera       Camera instance providing position and view direction
+     * @param reach        Maximum interaction range in blocks
+     * @param player       The client player entity performing the break action
+     * @return true if a ghost block was successfully broken, false otherwise
      */
-    public static boolean handleGhostBlockBreak(Camera camera, double reach, ClientPlayerEntity player) {
-        GhostBlockTarget target = getGhostBlockTarget(camera, reach);
+    public static boolean handleGhostBlockBreak(IWorldManager worldManager, Camera camera, double reach,
+            ClientPlayerEntity player) {
+        GhostBlockTarget target = getGhostBlockTarget(worldManager, camera, reach);
         if (target == null) {
             return false;
         }
 
-        CraftPilot.getInstance().getWorldManager().clearBlockState(target.pos());
+        worldManager.clearBlockState(target.pos());
         player.swingHand(Hand.MAIN_HAND);
         return true;
     }
 
     /**
-     * Finds the nearest ghost block along the player's line of sight
+     * Finds the nearest ghost block along the player's line of sight using
+     * raycasting
      * 
-     * @param ghostBlocks Map of ghost blocks and their states
-     * @param cameraPos   Starting position for raytrace
-     * @param lookVec     Direction vector
-     * @param reach       Maximum reach distance
-     * @return The nearest ghost block position, or null if none found
+     * @param ghostBlocks Map of ghost block positions to their corresponding block
+     *                    states
+     * @param cameraPos   Starting position for the raycast
+     * @param lookVec     Direction vector of the player's view
+     * @param reach       Maximum reach distance in blocks
+     * @return The position of the nearest ghost block hit by the raycast, or null
+     *         if none found
      */
     private static BlockPos findTargetedGhostBlock(Map<BlockPos, BlockState> ghostBlocks, Vec3d cameraPos,
             Vec3d lookVec, double reach) {
@@ -98,12 +106,13 @@ public final class GhostBlockService {
     }
 
     /**
-     * Picks the ghost block at the targeted position
+     * Picks the ghost block by adding or selecting it in the player's inventory
      * 
-     * @param state           Block state to pick
-     * @param enabledFeatures Set of enabled game features
-     * @param creativeMode    Whether the player is in creative mode
-     * @param inventory       Player's inventory
+     * @param state           Block state to pick and convert to item
+     * @param enabledFeatures Set of enabled game features for item validation
+     * @param creativeMode    Whether the player is in creative mode for inventory
+     *                        manipulation
+     * @param inventory       Player's inventory to modify
      */
     private static void pickGhostBlock(BlockState state, FeatureSet enabledFeatures, boolean creativeMode,
             PlayerInventory inventory) {
@@ -132,18 +141,20 @@ public final class GhostBlockService {
     }
 
     /**
-     * Gets the ghost block the player is currently looking at
+     * Gets the ghost block the player is currently targeting
      * 
-     * @param camera Camera instance providing position and view direction
-     * @param reach  Maximum interaction range
+     * @param worldManager Manager handling ghost block state and interactions
+     * @param camera       Camera instance providing position and view direction
+     * @param reach        Maximum interaction range in blocks
      * @return A GhostBlockTarget containing the position and state of the targeted
-     *         block, or null if none found
+     *         block,
+     *         or null if no ghost block is being targeted
      */
-    private static GhostBlockTarget getGhostBlockTarget(Camera camera, double reach) {
+    private static GhostBlockTarget getGhostBlockTarget(IWorldManager worldManager, Camera camera, double reach) {
         Vec3d lookVec = Vec3d.fromPolar(camera.getPitch(), camera.getYaw());
 
         BlockPos targetPos = findTargetedGhostBlock(
-                CraftPilot.getInstance().getWorldManager().getGhostBlocks(),
+                worldManager.getGhostBlocks(),
                 camera.getPos(),
                 lookVec,
                 reach);
@@ -151,7 +162,7 @@ public final class GhostBlockService {
             return null;
         }
 
-        BlockState ghostState = CraftPilot.getInstance().getWorldManager().getGhostBlocks().get(targetPos);
+        BlockState ghostState = worldManager.getGhostBlocks().get(targetPos);
         return new GhostBlockTarget(targetPos, ghostState);
     }
 }
