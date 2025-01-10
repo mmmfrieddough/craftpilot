@@ -2,6 +2,7 @@ package mmmfrieddough.craftpilot.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
@@ -22,16 +23,19 @@ import org.mockito.quality.Strictness;
 
 import net.minecraft.Bootstrap;
 import net.minecraft.SharedConstants;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
+import net.minecraft.resource.featuretoggle.FeatureSet;
+import net.minecraft.resource.featuretoggle.FeatureUniverse;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -42,13 +46,17 @@ class GhostBlockServiceTest {
     @Mock
     private ClientPlayerEntity player;
     @Mock
-    private ClientPlayerInteractionManager interactionManager;
-    @Mock
     private PlayerInventory inventory;
     @Mock
-    private ItemStack mockStack;
+    private World world;
     @Mock
-    private BlockState mockBlockState;
+    private BlockState state;
+    @Mock
+    private Block block;
+    @Mock
+    private Item item;
+    @Mock
+    private ItemStack stack;
 
     @BeforeAll
     static void init() {
@@ -59,8 +67,14 @@ class GhostBlockServiceTest {
     @BeforeEach
     void setUp() {
         client.player = player;
-        client.interactionManager = interactionManager;
         doReturn(inventory).when(player).getInventory();
+        when(player.getWorld()).thenReturn(world);
+        when(world.getEnabledFeatures()).thenReturn(null);
+        when(state.getBlock()).thenReturn(block);
+        when(block.asItem()).thenReturn(item);
+        when(item.getDefaultStack()).thenReturn(stack);
+        when(stack.isEmpty()).thenReturn(false);
+        when(stack.isItemEnabled(any())).thenReturn(true);
     }
 
     @Test
@@ -77,15 +91,14 @@ class GhostBlockServiceTest {
     @Test
     void findTargetedGhostBlock_LookingDirectlyAtBlock_ReturnsBlock() {
         Map<BlockPos, BlockState> ghostBlocks = new HashMap<>();
-        BlockPos pos = new BlockPos(2, 1, 0); // Block at (2,1,0)
-        BlockState concreteBlockState = Blocks.STONE.getDefaultState();
-        ghostBlocks.put(pos, concreteBlockState);
+        BlockPos pos = new BlockPos(2, 1, 0);
+        BlockState stoneState = Blocks.STONE.getDefaultState();
+        ghostBlocks.put(pos, stoneState);
 
-        Vec3d cameraPos = new Vec3d(0, 1, 0); // Camera at (0,1,0)
-        Vec3d lookVec = new Vec3d(1, 0, 0); // Looking straight along X axis
+        Vec3d cameraPos = new Vec3d(0, 1, 0);
+        Vec3d lookVec = new Vec3d(1, 0, 0);
 
-        BlockPos result = GhostBlockService.findTargetedGhostBlock(ghostBlocks,
-                cameraPos, lookVec, 5.0);
+        BlockPos result = GhostBlockService.findTargetedGhostBlock(ghostBlocks, cameraPos, lookVec, 5.0);
 
         assertEquals(pos, result);
     }
@@ -93,14 +106,14 @@ class GhostBlockServiceTest {
     @Test
     void findTargetedGhostBlock_LookingAwayFromBlock_ReturnsNull() {
         Map<BlockPos, BlockState> ghostBlocks = new HashMap<>();
-        BlockPos pos = new BlockPos(2, 1, 0); // Block at (2,1,0)
-        ghostBlocks.put(pos, mockBlockState);
+        BlockPos pos = new BlockPos(2, 1, 0);
+        BlockState stoneState = Blocks.STONE.getDefaultState();
+        ghostBlocks.put(pos, stoneState);
 
-        Vec3d cameraPos = new Vec3d(0, 1, 0); // Camera at (0,1,0)
-        Vec3d lookVec = new Vec3d(-1, 0, 0); // Looking in opposite direction (negative X)
+        Vec3d cameraPos = new Vec3d(0, 1, 0);
+        Vec3d lookVec = new Vec3d(-1, 0, 0);
 
-        BlockPos result = GhostBlockService.findTargetedGhostBlock(ghostBlocks,
-                cameraPos, lookVec, 5.0);
+        BlockPos result = GhostBlockService.findTargetedGhostBlock(ghostBlocks, cameraPos, lookVec, 5.0);
 
         assertNull(result);
     }
@@ -108,15 +121,14 @@ class GhostBlockServiceTest {
     @Test
     void findTargetedGhostBlock_BlockTooFar_ReturnsNull() {
         Map<BlockPos, BlockState> ghostBlocks = new HashMap<>();
-        BlockPos pos = new BlockPos(10, 1, 0); // Block at (10,1,0)
-        ghostBlocks.put(pos, mockBlockState);
+        BlockPos pos = new BlockPos(10, 1, 0);
+        BlockState stoneState = Blocks.STONE.getDefaultState();
+        ghostBlocks.put(pos, stoneState);
 
-        Vec3d cameraPos = new Vec3d(0, 1, 0); // Camera at (0,1,0)
-        Vec3d lookVec = new Vec3d(1, 0, 0); // Looking towards block
+        Vec3d cameraPos = new Vec3d(0, 1, 0);
+        Vec3d lookVec = new Vec3d(1, 0, 0);
 
-        BlockPos result = GhostBlockService.findTargetedGhostBlock(ghostBlocks,
-                cameraPos, lookVec, 5.0); // Max
-        // distance 5
+        BlockPos result = GhostBlockService.findTargetedGhostBlock(ghostBlocks, cameraPos, lookVec, 5.0);
 
         assertNull(result);
     }
@@ -124,80 +136,57 @@ class GhostBlockServiceTest {
     @Test
     void findTargetedGhostBlock_MultipleBlocks_ReturnsClosest() {
         Map<BlockPos, BlockState> ghostBlocks = new HashMap<>();
-        BlockPos farPos = new BlockPos(4, 1, 0); // Block at (4,1,0)
-        BlockPos closePos = new BlockPos(2, 1, 0); // Block at (2,1,0)
-        ghostBlocks.put(farPos, mockBlockState);
-        ghostBlocks.put(closePos, mockBlockState);
+        BlockPos farPos = new BlockPos(4, 1, 0);
+        BlockPos closePos = new BlockPos(2, 1, 0);
+        BlockState stoneState = Blocks.STONE.getDefaultState();
+        ghostBlocks.put(farPos, stoneState);
+        ghostBlocks.put(closePos, stoneState);
 
-        Vec3d cameraPos = new Vec3d(0, 1, 0); // Camera at (0,1,0)
-        Vec3d lookVec = new Vec3d(1, 0, 0); // Looking along X axis
+        Vec3d cameraPos = new Vec3d(0, 1, 0);
+        Vec3d lookVec = new Vec3d(1, 0, 0);
 
-        BlockPos result = GhostBlockService.findTargetedGhostBlock(ghostBlocks,
-                cameraPos, lookVec, 5.0);
+        BlockPos result = GhostBlockService.findTargetedGhostBlock(ghostBlocks, cameraPos, lookVec, 5.0);
 
         assertEquals(closePos, result);
     }
 
     @Test
-    void handleInventoryPick_CreativeMode_ReturnsHotbarSlot() {
-        inventory.selectedSlot = 0;
+    void pickGhostBlock_CreativeMode_AddsItemToInventory() {
+        when(player.isInCreativeMode()).thenReturn(true);
+        when(inventory.getSlotWithStack(any())).thenReturn(-1);
 
-        int result = GhostBlockService.handleInventoryPick(inventory, mockStack,
-                true, mockStack);
+        GhostBlockService.pickGhostBlock(client, state);
 
-        assertEquals(36, result);
-        verify(inventory).addPickBlock(mockStack);
+        verify(inventory).swapStackWithHotbar(any());
     }
 
     @Test
-    void handleInventoryPick_SurvivalModeWithItemInHotbar_ReturnsHotbarSlot() {
-        when(inventory.getSlotWithStack(mockStack)).thenReturn(3);
+    void pickGhostBlock_SurvivalModeItemInHotbar_SelectsHotbarSlot() {
+        when(player.isInCreativeMode()).thenReturn(false);
+        when(inventory.getSlotWithStack(any())).thenReturn(2);
 
-        int result = GhostBlockService.handleInventoryPick(inventory, mockStack,
-                false, mockStack);
-
-        assertEquals(3, result);
-    }
-
-    @Test
-    void handleInventoryPick_SurvivalModeNoItem_ReturnsMinusOne() {
-        when(inventory.getSlotWithStack(mockStack)).thenReturn(-1);
-
-        int result = GhostBlockService.handleInventoryPick(inventory, mockStack,
-                false, mockStack);
-
-        assertEquals(-1, result);
-    }
-
-    @Test
-    void executeInventoryPick_CreativeMode_ClicksCreativeStack() {
-        when(player.getStackInHand(Hand.MAIN_HAND)).thenReturn(mockStack);
-
-        GhostBlockService.executeInventoryPick(client, 1, true);
-
-        verify(interactionManager).clickCreativeStack(mockStack, 1);
-    }
-
-    @Test
-    void executeInventoryPick_SurvivalModeHotbarSlot_UpdatesSelectedSlot() {
-        GhostBlockService.executeInventoryPick(client, 38, false);
+        GhostBlockService.pickGhostBlock(client, state);
 
         assertEquals(2, inventory.selectedSlot);
     }
 
     @Test
-    void executeInventoryPick_SurvivalModeInventorySlot_PicksFromInventory() {
-        GhostBlockService.executeInventoryPick(client, 15, false);
+    void pickGhostBlock_SurvivalModeItemInInventory_SwapsWithHotbar() {
+        when(player.isInCreativeMode()).thenReturn(false);
+        when(inventory.getSlotWithStack(any())).thenReturn(15);
 
-        verify(interactionManager).pickFromInventory(15);
+        GhostBlockService.pickGhostBlock(client, state);
+
+        verify(inventory).swapSlotWithHotbar(15);
     }
 
     @Test
-    void executeInventoryPick_InvalidSlot_NoAction() {
-        GhostBlockService.executeInventoryPick(client, -1, false);
+    void pickGhostBlock_EmptyStack_NoAction() {
+        BlockState airState = Blocks.AIR.getDefaultState();
 
-        // Verify inventory.selectedSlot wasn't changed
-        verify(interactionManager, never()).pickFromInventory(anyInt());
-        assertEquals(0, inventory.selectedSlot);
+        GhostBlockService.pickGhostBlock(client, airState);
+
+        verify(inventory, never()).swapStackWithHotbar(any());
+        verify(inventory, never()).swapSlotWithHotbar(anyInt());
     }
 }

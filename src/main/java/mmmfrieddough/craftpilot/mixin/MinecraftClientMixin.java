@@ -8,11 +8,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.service.GhostBlockService;
+import mmmfrieddough.craftpilot.service.GhostBlockService.GhostBlockTarget;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -31,15 +31,8 @@ public class MinecraftClientMixin {
             return;
         }
 
-        ItemStack stack = target.state().getBlock().getPickStack(client.world, target.pos(), target.state());
-        if (!stack.isEmpty()) {
-            int slot = GhostBlockService.handleInventoryPick(
-                    client.player.getInventory(),
-                    stack,
-                    client.player.getAbilities().creativeMode,
-                    client.player.getStackInHand(Hand.MAIN_HAND));
-            GhostBlockService.executeInventoryPick(client, slot, client.player.getAbilities().creativeMode);
-        }
+        // Handle picking up the ghost block
+        GhostBlockService.pickGhostBlock(client, target.state());
     }
 
     @Inject(method = "doAttack", at = @At("HEAD"), cancellable = true)
@@ -54,9 +47,6 @@ public class MinecraftClientMixin {
         CraftPilot.getInstance().getWorldManager().clearBlockState(target.pos());
         client.player.swingHand(Hand.MAIN_HAND);
         cir.setReturnValue(true);
-    }
-
-    private record GhostBlockTarget(BlockPos pos, BlockState state) {
     }
 
     /**

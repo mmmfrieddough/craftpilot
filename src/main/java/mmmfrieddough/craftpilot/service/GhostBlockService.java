@@ -7,12 +7,14 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
 public final class GhostBlockService {
+    public record GhostBlockTarget(BlockPos pos, BlockState state) {
+    }
+
     // Prevent instantiation
     private GhostBlockService() {
     }
@@ -52,48 +54,33 @@ public final class GhostBlockService {
     }
 
     /**
-     * Handles inventory picking for a ghost block
+     * Picks the ghost block at the targeted position
      * 
-     * @param inventory        Player inventory
-     * @param stack            Item to pick
-     * @param isCreative       Whether player is in creative mode
-     * @param currentHandStack Current item in hand
-     * @return Slot that should be selected, or -1 if no action needed
+     * @param client Minecraft client
+     * @param state  Block state to pick
      */
-    public static int handleInventoryPick(PlayerInventory inventory, ItemStack stack,
-            boolean isCreative, ItemStack currentHandStack) {
-        if (isCreative) {
-            inventory.addPickBlock(stack);
-            return 36 + inventory.selectedSlot;
-        } else {
-            int slot = inventory.getSlotWithStack(stack);
-            if (slot != -1) {
-                if (PlayerInventory.isValidHotbarIndex(slot)) {
-                    return slot;
-                }
-                return slot;
-            }
-        }
-        return -1;
-    }
+    public static void pickGhostBlock(MinecraftClient client, BlockState state) {
+        // Get item as stack
+        ItemStack itemStack = state.getBlock().asItem().getDefaultStack();
 
-    /**
-     * Executes the inventory pick action for the given slot
-     * 
-     * @param client     The Minecraft client instance
-     * @param slot       The target inventory slot
-     * @param isCreative Whether the player is in creative mode
-     */
-    public static void executeInventoryPick(MinecraftClient client, int slot, boolean isCreative) {
-        if (slot >= 0) {
-            if (isCreative) {
-                client.interactionManager.clickCreativeStack(
-                        client.player.getStackInHand(Hand.MAIN_HAND), slot);
-            } else {
-                if (slot >= 36) {
-                    client.player.getInventory().selectedSlot = slot - 36;
-                } else {
-                    client.interactionManager.pickFromInventory(slot);
+        if (!itemStack.isEmpty()) {
+            // Check if item is enabled
+            if (itemStack.isItemEnabled(client.player.getWorld().getEnabledFeatures())) {
+                PlayerInventory playerInventory = client.player.getInventory();
+
+                // Check if item is already in inventory
+                int i = playerInventory.getSlotWithStack(itemStack);
+                if (i != -1) {
+                    // Select slot if in hotbar, otherwise swap with hotbar
+                    if (PlayerInventory.isValidHotbarIndex(i)) {
+                        playerInventory.selectedSlot = i;
+                    } else {
+                        playerInventory.swapSlotWithHotbar(i);
+                    }
+                } else if (client.player.isInCreativeMode()) {
+                    // Add item to inventory
+                    playerInventory.swapStackWithHotbar(itemStack);
+                    itemStack.setBobbingAnimationTime(5);
                 }
             }
         }
