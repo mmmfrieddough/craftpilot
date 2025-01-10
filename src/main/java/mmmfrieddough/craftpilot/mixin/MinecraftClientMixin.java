@@ -6,16 +6,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.service.GhostBlockService;
-import mmmfrieddough.craftpilot.service.GhostBlockService.GhostBlockTarget;
-import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.resource.featuretoggle.FeatureSet;
 
 /**
  * Mixin to handle ghost block interactions in the Minecraft client.
@@ -23,54 +20,32 @@ import net.minecraft.util.math.Vec3d;
  */
 @Mixin(MinecraftClient.class)
 public class MinecraftClientMixin {
+
     @Inject(method = "doItemPick", at = @At("HEAD"), cancellable = true)
     private void onDoItemPick(CallbackInfo ci) {
+        // Extract necessary information
         MinecraftClient client = MinecraftClient.getInstance();
-        GhostBlockTarget target = getGhostBlockTarget();
-        if (target == null) {
-            return;
-        }
+        Camera camera = client.gameRenderer.getCamera();
+        double reach = client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
+        FeatureSet enabledFeatures = client.player.getWorld().getEnabledFeatures();
+        boolean creativeMode = client.interactionManager.getCurrentGameMode().isCreative();
+        PlayerInventory inventory = client.player.getInventory();
 
-        // Handle picking up the ghost block
-        GhostBlockService.pickGhostBlock(client, target.state());
+        if (GhostBlockService.handleGhostBlockPick(camera, reach, enabledFeatures, creativeMode, inventory)) {
+            ci.cancel();
+        }
     }
 
     @Inject(method = "doAttack", at = @At("HEAD"), cancellable = true)
     private void onDoAttack(CallbackInfoReturnable<Boolean> cir) {
+        // Extract necessary information
         MinecraftClient client = MinecraftClient.getInstance();
-        GhostBlockTarget target = getGhostBlockTarget();
-        if (target == null) {
-            return;
-        }
-
-        // Handle breaking the ghost block
-        CraftPilot.getInstance().getWorldManager().clearBlockState(target.pos());
-        client.player.swingHand(Hand.MAIN_HAND);
-        cir.setReturnValue(true);
-    }
-
-    /**
-     * Gets the ghost block the player is currently looking at
-     * 
-     * @return Target information, or null if no valid target
-     */
-    private GhostBlockTarget getGhostBlockTarget() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null || client.world == null || client.gameRenderer == null) {
-            return null;
-        }
-
         Camera camera = client.gameRenderer.getCamera();
-        Vec3d lookVec = Vec3d.fromPolar(camera.getPitch(), camera.getYaw());
         double reach = client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
+        ClientPlayerEntity player = client.player;
 
-        BlockPos targetPos = GhostBlockService.findTargetedGhostBlock(
-                CraftPilot.getInstance().getWorldManager().getGhostBlocks(), camera.getPos(), lookVec, reach);
-        if (targetPos == null) {
-            return null;
+        if (GhostBlockService.handleGhostBlockBreak(camera, reach, player)) {
+            cir.setReturnValue(true);
         }
-
-        BlockState ghostState = CraftPilot.getInstance().getWorldManager().getGhostBlocks().get(targetPos);
-        return new GhostBlockTarget(targetPos, ghostState);
     }
 }
