@@ -3,8 +3,9 @@ package mmmfrieddough.craftpilot.config;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry.Category;
-import me.shedaniel.autoconfig.annotation.ConfigEntry.Gui.TransitiveObject;
+import me.shedaniel.autoconfig.annotation.ConfigEntry.ColorPicker;
 import me.shedaniel.autoconfig.annotation.ConfigEntry.Gui.Tooltip;
+import me.shedaniel.autoconfig.annotation.ConfigEntry.Gui.TransitiveObject;
 
 @Config(name = mmmfrieddough.craftpilot.Reference.MOD_ID)
 public class ModConfig implements ConfigData {
@@ -50,7 +51,12 @@ public class ModConfig implements ConfigData {
         @Tooltip
         public float blockPlacementOpacity = 0.8f;
         @Tooltip
-        public float blockOutlineOpacity = 0.2f;
+        public float blockOutlineOpacity = 0.4f;
+        @Tooltip
+        @ColorPicker
+        public int normalOutlineColor = 0x00FFFF; // Regular cyan
+        @Tooltip
+        @ColorPicker
+        public int targetedOutlineColor = 0x009FFF; // Blueish cyan
     }
-
 }

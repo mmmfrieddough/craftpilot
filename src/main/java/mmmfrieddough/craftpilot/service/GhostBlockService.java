@@ -1,48 +1,107 @@
 package mmmfrieddough.craftpilot.service;
 
 import java.util.Map;
-import java.util.Optional;
 
+import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.render.Camera;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket;
+import net.minecraft.resource.featuretoggle.FeatureSet;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.shape.VoxelShape;
 
 public final class GhostBlockService {
     public record GhostBlockTarget(BlockPos pos, BlockState state) {
     }
+
+    private static GhostBlockTarget currentTarget = null;
 
     // Prevent instantiation
     private GhostBlockService() {
     }
 
     /**
-     * Finds the nearest ghost block along the player's line of sight
+     * Handles ghost block picking interaction by selecting or adding the targeted
+     * block to inventory
      * 
-     * @param ghostBlocks Map of ghost blocks
-     * @param cameraPos   Starting position for raytrace
-     * @param lookVec     Direction vector
-     * @param reach       Maximum reach distance
-     * @return The nearest ghost block position, or null if none found
+     * @param enabledFeatures Set of enabled game features
+     * @param creativeMode    Whether the player is in creative mode
+     * @param inventory       Player's inventory
+     * @param networkHandler  Network handler for sending inventory updates
+     * @return true if a ghost block was successfully picked, false otherwise
+     */
+    public static boolean handleGhostBlockPick(FeatureSet enabledFeatures, boolean creativeMode,
+            PlayerInventory inventory, ClientPlayNetworkHandler networkHandler) {
+        GhostBlockTarget target = getCurrentTarget();
+        if (target == null) {
+            return false;
+        }
+
+        pickGhostBlock(target.state(), enabledFeatures, creativeMode, inventory, networkHandler);
+        return true;
+    }
+
+    /**
+     * Handles ghost block breaking interaction by removing the targeted ghost block
+     * 
+     * @param worldManager Manager handling ghost block state and interactions
+     * @param player       The client player entity performing the break action
+     * @return true if a ghost block was successfully broken, false otherwise
+     */
+    public static boolean handleGhostBlockBreak(IWorldManager worldManager, ClientPlayerEntity player) {
+        GhostBlockTarget target = getCurrentTarget();
+        if (target == null) {
+            return false;
+        }
+
+        worldManager.clearBlockState(target.pos());
+        player.swingHand(Hand.MAIN_HAND);
+        return true;
+    }
+
+    /**
+     * Finds the nearest ghost block along the player's line of sight using
+     * raycasting
+     * 
+     * @param ghostBlocks   Map of ghost block positions to their corresponding
+     *                      block
+     *                      states
+     * @param cameraPos     Starting position for the raycast
+     * @param lookVec       Direction vector of the player's view
+     * @param reach         Maximum reach distance in blocks
+     * @param vanillaTarget The vanilla target result from the client
+     * @return The position of the nearest ghost block hit by the raycast, or null
+     *         if none found
      */
     public static BlockPos findTargetedGhostBlock(Map<BlockPos, BlockState> ghostBlocks, Vec3d cameraPos, Vec3d lookVec,
-            double reach) {
+            double reach, HitResult vanillaTarget) {
         if (ghostBlocks.isEmpty()) {
             return null;
         }
 
-        Vec3d endPos = cameraPos.add(lookVec.multiply(reach));
+        // Calculate the starting nearest distance
+        double nearestDist = vanillaTarget.getType() != HitResult.Type.MISS
+                ? cameraPos.squaredDistanceTo(vanillaTarget.getPos())
+                : reach * reach;
+
         BlockPos nearestPos = null;
-        double nearestDist = Double.MAX_VALUE;
+        Vec3d endPos = cameraPos.add(lookVec.multiply(reach));
 
         for (BlockPos pos : ghostBlocks.keySet()) {
-            Box box = new Box(pos);
-            Optional<Vec3d> hit = box.raycast(cameraPos, endPos);
-            if (hit.isPresent()) {
-                double dist = cameraPos.squaredDistanceTo(hit.get());
+            BlockState state = ghostBlocks.get(pos);
+            VoxelShape shape = state.getOutlineShape(null, pos);
+            BlockHitResult hitResult = shape.raycast(cameraPos, endPos, pos);
+
+            if (hitResult != null && hitResult.getType() != HitResult.Type.MISS) {
+                double dist = cameraPos.squaredDistanceTo(hitResult.getPos());
                 if (dist < nearestDist) {
                     nearestDist = dist;
                     nearestPos = pos;
@@ -54,35 +113,81 @@ public final class GhostBlockService {
     }
 
     /**
-     * Picks the ghost block at the targeted position
+     * Picks the ghost block by adding or selecting it in the player's inventory
      * 
-     * @param client Minecraft client
-     * @param state  Block state to pick
+     * @param state           Block state to pick and convert to item
+     * @param enabledFeatures Set of enabled game features for item validation
+     * @param creativeMode    Whether the player is in creative mode for inventory
+     *                        manipulation
+     * @param inventory       Player's inventory to modify
+     * @param networkHandler  Network handler for sending inventory updates
      */
-    public static void pickGhostBlock(MinecraftClient client, BlockState state) {
+    private static void pickGhostBlock(BlockState state, FeatureSet enabledFeatures, boolean creativeMode,
+            PlayerInventory inventory, ClientPlayNetworkHandler networkHandler) {
         // Get item as stack
         ItemStack itemStack = state.getBlock().asItem().getDefaultStack();
 
         if (!itemStack.isEmpty()) {
             // Check if item is enabled
-            if (itemStack.isItemEnabled(client.player.getWorld().getEnabledFeatures())) {
-                PlayerInventory playerInventory = client.player.getInventory();
-
+            if (itemStack.isItemEnabled(enabledFeatures)) {
                 // Check if item is already in inventory
-                int i = playerInventory.getSlotWithStack(itemStack);
+                int i = inventory.getSlotWithStack(itemStack);
                 if (i != -1) {
                     // Select slot if in hotbar, otherwise swap with hotbar
                     if (PlayerInventory.isValidHotbarIndex(i)) {
-                        playerInventory.selectedSlot = i;
+                        inventory.selectedSlot = i;
                     } else {
-                        playerInventory.swapSlotWithHotbar(i);
+                        inventory.swapSlotWithHotbar(i);
                     }
-                } else if (client.player.isInCreativeMode()) {
+                } else if (creativeMode) {
                     // Add item to inventory
-                    playerInventory.swapStackWithHotbar(itemStack);
+                    inventory.swapStackWithHotbar(itemStack);
                     itemStack.setBobbingAnimationTime(5);
+                    networkHandler
+                            .sendPacket(new CreativeInventoryActionC2SPacket(36 + inventory.selectedSlot, itemStack));
                 }
             }
         }
+    }
+
+    /**
+     * Gets the ghost block the player is currently targeting
+     * 
+     * @param worldManager  Manager handling ghost block state and interactions
+     * @param camera        Camera instance providing position and view direction
+     * @param reach         Maximum interaction range in blocks
+     * @param vanillaTarget The vanilla target result from the client
+     * @return A GhostBlockTarget containing the position and state of the targeted
+     *         block,
+     *         or null if no ghost block is being targeted
+     */
+    private static GhostBlockTarget getGhostBlockTarget(IWorldManager worldManager, Camera camera, double reach,
+            HitResult vanillaTarget) {
+        Vec3d cameraPos = camera.getPos();
+        Vec3d rotationVec = camera.getFocusedEntity().getRotationVec(1.0f);
+
+        // Find nearest ghost block using ray casting
+        BlockPos targetPos = findTargetedGhostBlock(worldManager.getGhostBlocks(), cameraPos, rotationVec, reach,
+                vanillaTarget);
+
+        if (targetPos == null) {
+            return null;
+        }
+
+        BlockState ghostState = worldManager.getGhostBlocks().get(targetPos);
+        return new GhostBlockTarget(targetPos, ghostState);
+    }
+
+    public static void updateCurrentTarget(IWorldManager worldManager, Camera camera, double reach,
+            HitResult vanillaTarget) {
+        currentTarget = getGhostBlockTarget(worldManager, camera, reach, vanillaTarget);
+    }
+
+    public static GhostBlockTarget getCurrentTarget() {
+        return currentTarget;
+    }
+
+    public static BlockPos getCurrentTargetPos() {
+        return currentTarget != null ? currentTarget.pos() : null;
     }
 }
