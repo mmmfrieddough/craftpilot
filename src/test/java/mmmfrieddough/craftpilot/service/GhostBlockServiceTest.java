@@ -111,8 +111,8 @@ class GhostBlockServiceTest {
     class BasicPickingTests {
         @Test
         void givenNoGhostBlocks_whenPicking_thenNoAction() {
-            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
-                    vanillaTarget, networkHandler);
+            GhostBlockService.updateCurrentTarget(worldManager, camera, 5, vanillaTarget);
+            boolean result = GhostBlockService.handleGhostBlockPick(null, true, inventory, networkHandler);
 
             assertFalse(result);
             verify(inventory, never()).swapStackWithHotbar(any());
@@ -124,8 +124,8 @@ class GhostBlockServiceTest {
             ghostBlocks.put(new BlockPos(1, 0, 0), state);
             when(inventory.getSlotWithStack(stack)).thenReturn(-1);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
-                    vanillaTarget, networkHandler);
+            GhostBlockService.updateCurrentTarget(worldManager, camera, 5, vanillaTarget);
+            boolean result = GhostBlockService.handleGhostBlockPick(null, true, inventory, networkHandler);
 
             assertTrue(result);
             verify(inventory).swapStackWithHotbar(stack);
@@ -139,8 +139,8 @@ class GhostBlockServiceTest {
             // Looking straight up instead of ahead
             when(focusedEntity.getRotationVec(1.0f)).thenReturn(new Vec3d(0, 1, 0));
 
-            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
-                    vanillaTarget, networkHandler);
+            GhostBlockService.updateCurrentTarget(worldManager, camera, 5, vanillaTarget);
+            boolean result = GhostBlockService.handleGhostBlockPick(null, true, inventory, networkHandler);
 
             assertFalse(result);
             verify(inventory, never()).swapStackWithHotbar(any());
@@ -150,8 +150,8 @@ class GhostBlockServiceTest {
         void givenDistantGhostBlock_whenPicking_thenNoAction() {
             ghostBlocks.put(new BlockPos(10, 0, 0), state);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
-                    vanillaTarget, networkHandler);
+            GhostBlockService.updateCurrentTarget(worldManager, camera, 5, vanillaTarget);
+            boolean result = GhostBlockService.handleGhostBlockPick(null, true, inventory, networkHandler);
 
             assertFalse(result);
             verify(inventory, never()).swapStackWithHotbar(any());
@@ -166,8 +166,8 @@ class GhostBlockServiceTest {
 
             when(inventory.getSlotWithStack(stack)).thenReturn(-1);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
-                    vanillaTarget, networkHandler);
+            GhostBlockService.updateCurrentTarget(worldManager, camera, 5, vanillaTarget);
+            boolean result = GhostBlockService.handleGhostBlockPick(null, true, inventory, networkHandler);
 
             assertTrue(result);
             verify(inventory).swapStackWithHotbar(stack);
@@ -182,8 +182,8 @@ class GhostBlockServiceTest {
             ghostBlocks.put(new BlockPos(1, 0, 0), state);
             when(inventory.getSlotWithStack(stack)).thenReturn(0);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
-                    vanillaTarget, networkHandler);
+            GhostBlockService.updateCurrentTarget(worldManager, camera, 5, vanillaTarget);
+            boolean result = GhostBlockService.handleGhostBlockPick(null, true, inventory, networkHandler);
 
             assertTrue(result);
             assertEquals(0, inventory.selectedSlot);
@@ -196,8 +196,8 @@ class GhostBlockServiceTest {
             ghostBlocks.put(new BlockPos(1, 0, 0), state);
             when(inventory.getSlotWithStack(stack)).thenReturn(9);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
-                    vanillaTarget, networkHandler);
+            GhostBlockService.updateCurrentTarget(worldManager, camera, 5, vanillaTarget);
+            boolean result = GhostBlockService.handleGhostBlockPick(null, true, inventory, networkHandler);
 
             assertTrue(result);
             verify(inventory).swapSlotWithHotbar(9);
@@ -211,8 +211,8 @@ class GhostBlockServiceTest {
         void givenNegativeReach_whenPicking_thenNoAction() {
             ghostBlocks.put(new BlockPos(1, 0, 0), state);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, -1.0, null, true, inventory,
-                    vanillaTarget, networkHandler);
+            GhostBlockService.updateCurrentTarget(worldManager, camera, -1, vanillaTarget);
+            boolean result = GhostBlockService.handleGhostBlockPick(null, true, inventory, networkHandler);
 
             assertFalse(result);
             verify(inventory, never()).swapStackWithHotbar(any());
@@ -223,8 +223,8 @@ class GhostBlockServiceTest {
             ghostBlocks.put(new BlockPos(1, 0, 0), state);
             when(stack.isItemEnabled(any())).thenReturn(false);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
-                    vanillaTarget, networkHandler);
+            GhostBlockService.updateCurrentTarget(worldManager, camera, 5, vanillaTarget);
+            boolean result = GhostBlockService.handleGhostBlockPick(null, true, inventory, networkHandler);
 
             assertTrue(result); // Method still returns true as block was found
             verify(inventory, never()).swapStackWithHotbar(any());
@@ -235,8 +235,8 @@ class GhostBlockServiceTest {
             ghostBlocks.put(new BlockPos(1, 0, 0), state);
             when(stack.isEmpty()).thenReturn(true);
 
-            boolean result = GhostBlockService.handleGhostBlockPick(worldManager, camera, 5.0, null, true, inventory,
-                    vanillaTarget, networkHandler);
+            GhostBlockService.updateCurrentTarget(worldManager, camera, 5, vanillaTarget);
+            boolean result = GhostBlockService.handleGhostBlockPick(null, true, inventory, networkHandler);
 
             assertTrue(result); // Method still returns true as block was found
             verify(inventory, never()).swapStackWithHotbar(any());
