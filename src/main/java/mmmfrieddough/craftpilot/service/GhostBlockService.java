@@ -20,6 +20,8 @@ public final class GhostBlockService {
     public record GhostBlockTarget(BlockPos pos, BlockState state) {
     }
 
+    private static GhostBlockTarget currentTarget = null;
+
     // Prevent instantiation
     private GhostBlockService() {
     }
@@ -38,7 +40,7 @@ public final class GhostBlockService {
      */
     public static boolean handleGhostBlockPick(IWorldManager worldManager, Camera camera, double reach,
             FeatureSet enabledFeatures, boolean creativeMode, PlayerInventory inventory, HitResult vanillaTarget) {
-        GhostBlockTarget target = getGhostBlockTarget(worldManager, camera, reach, vanillaTarget);
+        GhostBlockTarget target = getCurrentTarget();
         if (target == null) {
             return false;
         }
@@ -58,7 +60,7 @@ public final class GhostBlockService {
      */
     public static boolean handleGhostBlockBreak(IWorldManager worldManager, Camera camera, double reach,
             ClientPlayerEntity player, HitResult vanillaTarget) {
-        GhostBlockTarget target = getGhostBlockTarget(worldManager, camera, reach, vanillaTarget);
+        GhostBlockTarget target = getCurrentTarget();
         if (target == null) {
             return false;
         }
@@ -171,5 +173,18 @@ public final class GhostBlockService {
 
         BlockState ghostState = worldManager.getGhostBlocks().get(targetPos);
         return new GhostBlockTarget(targetPos, ghostState);
+    }
+
+    public static void updateCurrentTarget(IWorldManager worldManager, Camera camera, double reach,
+            HitResult vanillaTarget) {
+        currentTarget = getGhostBlockTarget(worldManager, camera, reach, vanillaTarget);
+    }
+
+    public static GhostBlockTarget getCurrentTarget() {
+        return currentTarget;
+    }
+
+    public static BlockPos getCurrentTargetPos() {
+        return currentTarget != null ? currentTarget.pos() : null;
     }
 }

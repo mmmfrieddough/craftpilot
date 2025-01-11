@@ -15,9 +15,7 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.VertexRendering;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShape;
 
 public final class GhostBlockRenderService {
@@ -27,17 +25,12 @@ public final class GhostBlockRenderService {
     /**
      * Renders ghost blocks with translucent effect
      */
-    public static void renderGhostBlocks(
-            MinecraftClient client,
-            Map<BlockPos, BlockState> ghostBlocks,
-            BlockPos cameraPos,
-            double cameraX,
-            double cameraY,
-            double cameraZ,
-            int renderDistance,
-            float opacity,
-            MatrixStack matrices,
-            VertexConsumerProvider.Immediate immediate) {
+    public static void renderGhostBlocks(MinecraftClient client, Map<BlockPos, BlockState> ghostBlocks, Camera camera,
+            int renderDistance, float opacity, MatrixStack matrices, VertexConsumerProvider.Immediate immediate) {
+        BlockPos cameraPos = camera.getBlockPos();
+        double cameraX = camera.getPos().x;
+        double cameraY = camera.getPos().y;
+        double cameraZ = camera.getPos().z;
 
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, opacity);
         VertexConsumer translucentVertices = immediate.getBuffer(RenderLayer.getTranslucent());
@@ -48,19 +41,10 @@ public final class GhostBlockRenderService {
             // Only render blocks within view distance
             if (pos.isWithinDistance(cameraPos, renderDistance)) {
                 matrices.push();
-                matrices.translate(
-                        pos.getX() - cameraX,
-                        pos.getY() - cameraY,
-                        pos.getZ() - cameraZ);
+                matrices.translate(pos.getX() - cameraX, pos.getY() - cameraY, pos.getZ() - cameraZ);
 
-                client.getBlockRenderManager().renderBlock(
-                        entry.getValue(),
-                        pos,
-                        client.world,
-                        matrices,
-                        translucentVertices,
-                        false,
-                        client.world.random);
+                client.getBlockRenderManager().renderBlock(entry.getValue(), pos, client.world, matrices,
+                        translucentVertices, false, client.world.random);
 
                 matrices.pop();
             }
@@ -72,25 +56,15 @@ public final class GhostBlockRenderService {
     /**
      * Renders outlines for ghost blocks
      */
-    public static void renderBlockOutlines(
-            MinecraftClient client,
-            Map<BlockPos, BlockState> ghostBlocks,
-            BlockPos cameraPos,
-            double cameraX,
-            double cameraY,
-            double cameraZ,
-            int renderDistance,
-            Rendering config,
-            MatrixStack matrices,
-            VertexConsumerProvider.Immediate immediate) {
+    public static void renderBlockOutlines(MinecraftClient client, Map<BlockPos, BlockState> ghostBlocks, Camera camera,
+            int renderDistance, Rendering config, MatrixStack matrices, VertexConsumerProvider.Immediate immediate) {
+        BlockPos cameraPos = camera.getBlockPos();
+        double cameraX = camera.getPos().x;
+        double cameraY = camera.getPos().y;
+        double cameraZ = camera.getPos().z;
 
-        // Get currently targeted ghost block
-        Camera camera = client.gameRenderer.getCamera();
-        Vec3d camPos = camera.getPos();
-        Vec3d lookVec = camera.getFocusedEntity().getRotationVec(1.0f);
-        double reach = client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
-        BlockPos targetedBlock = GhostBlockService.findTargetedGhostBlock(
-                ghostBlocks, camPos, lookVec, reach, client.crosshairTarget);
+        // Replace the target calculation with cached value
+        BlockPos targetedBlock = GhostBlockService.getCurrentTargetPos();
 
         RenderSystem.enableDepthTest();
         RenderSystem.depthFunc(GL11.GL_LESS);
@@ -110,14 +84,8 @@ public final class GhostBlockRenderService {
             if (!pos.equals(targetedBlock) && pos.isWithinDistance(cameraPos, renderDistance)) {
                 VoxelShape shape = entry.getValue().getOutlineShape(client.world, pos);
                 shape.forEachBox((minX, minY, minZ, maxX, maxY, maxZ) -> {
-                    VertexRendering.drawOutline(
-                            matrices,
-                            normalVertices,
-                            shape,
-                            pos.getX() - cameraX,
-                            pos.getY() - cameraY,
-                            pos.getZ() - cameraZ,
-                            normalColor);
+                    VertexRendering.drawOutline(matrices, normalVertices, shape, pos.getX() - cameraX,
+                            pos.getY() - cameraY, pos.getZ() - cameraZ, normalColor);
                 });
             }
         }
@@ -136,14 +104,8 @@ public final class GhostBlockRenderService {
             VoxelShape shape = state.getOutlineShape(client.world, targetedBlock);
             int targetedColor = (alpha << 24) | config.targetedOutlineColor;
             shape.forEachBox((minX, minY, minZ, maxX, maxY, maxZ) -> {
-                VertexRendering.drawOutline(
-                        matrices,
-                        targetedVertices,
-                        shape,
-                        targetedBlock.getX() - cameraX,
-                        targetedBlock.getY() - cameraY,
-                        targetedBlock.getZ() - cameraZ,
-                        targetedColor);
+                VertexRendering.drawOutline(matrices, targetedVertices, shape, targetedBlock.getX() - cameraX,
+                        targetedBlock.getY() - cameraY, targetedBlock.getZ() - cameraZ, targetedColor);
             });
 
             immediate.draw();
