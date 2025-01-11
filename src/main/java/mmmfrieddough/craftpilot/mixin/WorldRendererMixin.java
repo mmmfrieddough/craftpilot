@@ -68,15 +68,11 @@ public class WorldRendererMixin {
         // Apply the position matrix to align with world coordinates
         matrices.multiplyPositionMatrix(positionMatrix);
 
-        GhostBlockRenderService.renderGhostBlocks(
-                client, ghostBlocks, cameraPos, cameraX, cameraY, cameraZ,
-                renderDistance, config.rendering.blockPlacementOpacity,
-                matrices, immediate);
+        GhostBlockRenderService.renderGhostBlocks(client, ghostBlocks, cameraPos, cameraX, cameraY, cameraZ,
+                renderDistance, config.rendering.blockPlacementOpacity, matrices, immediate);
 
-        GhostBlockRenderService.renderBlockOutlines(
-                client, ghostBlocks, cameraPos, cameraX, cameraY, cameraZ,
-                renderDistance, config.rendering.blockOutlineOpacity,
-                matrices, immediate);
+        GhostBlockRenderService.renderBlockOutlines(client, ghostBlocks, cameraPos, cameraX, cameraY, cameraZ,
+                renderDistance, config.rendering, matrices, immediate);
 
         matrices.pop();
 

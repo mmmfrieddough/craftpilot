@@ -6,14 +6,18 @@ import org.lwjgl.opengl.GL11;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 
+import mmmfrieddough.craftpilot.config.ModConfig.Rendering;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.VertexRendering;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShape;
 
 public final class GhostBlockRenderService {
@@ -76,41 +80,74 @@ public final class GhostBlockRenderService {
             double cameraY,
             double cameraZ,
             int renderDistance,
-            float opacity,
+            Rendering config,
             MatrixStack matrices,
             VertexConsumerProvider.Immediate immediate) {
 
-        RenderSystem.setShaderColor(0.0f, 1.0f, 1.0f, opacity);
-        RenderSystem.lineWidth(2.0f);
+        // Get currently targeted ghost block
+        Camera camera = client.gameRenderer.getCamera();
+        Vec3d camPos = camera.getPos();
+        Vec3d lookVec = camera.getFocusedEntity().getRotationVec(1.0f);
+        double reach = client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
+        BlockPos targetedBlock = GhostBlockService.findTargetedGhostBlock(
+                ghostBlocks, camPos, lookVec, reach, client.crosshairTarget);
 
-        // Address Z-fighting issues with vanilla block outlines
         RenderSystem.enableDepthTest();
         RenderSystem.depthFunc(GL11.GL_LESS);
-        RenderSystem.polygonOffset(-1.0f, -3.0f);
+        RenderSystem.lineWidth(2.0f);
 
+        // First pass: render non-targeted blocks
+        RenderSystem.polygonOffset(-2.0f, -8.0f);
         RenderSystem.enablePolygonOffset();
 
-        VertexConsumer lineVertices = immediate.getBuffer(RenderLayer.getLines());
+        VertexConsumer normalVertices = immediate.getBuffer(RenderLayer.getLines());
+
+        int alpha = (int) (config.blockOutlineOpacity * 255.0f);
+        int normalColor = (alpha << 24) | config.normalOutlineColor;
 
         for (Map.Entry<BlockPos, BlockState> entry : ghostBlocks.entrySet()) {
             BlockPos pos = entry.getKey();
-            if (pos.isWithinDistance(cameraPos, renderDistance)) {
+            if (!pos.equals(targetedBlock) && pos.isWithinDistance(cameraPos, renderDistance)) {
                 VoxelShape shape = entry.getValue().getOutlineShape(client.world, pos);
-
                 shape.forEachBox((minX, minY, minZ, maxX, maxY, maxZ) -> {
                     VertexRendering.drawOutline(
                             matrices,
-                            lineVertices,
+                            normalVertices,
                             shape,
                             pos.getX() - cameraX,
                             pos.getY() - cameraY,
                             pos.getZ() - cameraZ,
-                            0xFF66FFFF); // Cyan color in ARGB format
+                            normalColor);
                 });
             }
         }
 
         immediate.draw();
+
+        // Second pass: render targeted block
+        if (targetedBlock != null && targetedBlock.isWithinDistance(cameraPos, renderDistance)) {
+            // Get fresh buffer for second pass
+            VertexConsumer targetedVertices = immediate.getBuffer(RenderLayer.getLines());
+
+            // Use less offset to render on top
+            RenderSystem.polygonOffset(-3.0f, -10.0f);
+
+            BlockState state = ghostBlocks.get(targetedBlock);
+            VoxelShape shape = state.getOutlineShape(client.world, targetedBlock);
+            int targetedColor = (alpha << 24) | config.targetedOutlineColor;
+            shape.forEachBox((minX, minY, minZ, maxX, maxY, maxZ) -> {
+                VertexRendering.drawOutline(
+                        matrices,
+                        targetedVertices,
+                        shape,
+                        targetedBlock.getX() - cameraX,
+                        targetedBlock.getY() - cameraY,
+                        targetedBlock.getZ() - cameraZ,
+                        targetedColor);
+            });
+
+            immediate.draw();
+        }
 
         RenderSystem.polygonOffset(0.0f, 0.0f);
         RenderSystem.disablePolygonOffset();
