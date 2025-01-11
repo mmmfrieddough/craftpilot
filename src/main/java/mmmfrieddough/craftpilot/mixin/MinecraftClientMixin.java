@@ -10,6 +10,7 @@ import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.service.GhostBlockService;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.attribute.EntityAttributes;
@@ -35,9 +36,10 @@ public class MinecraftClientMixin {
         boolean creativeMode = client.interactionManager.getCurrentGameMode().isCreative();
         PlayerInventory inventory = client.player.getInventory();
         HitResult vanillaTarget = client.crosshairTarget;
+        ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
 
         if (GhostBlockService.handleGhostBlockPick(worldManager, camera, reach, enabledFeatures, creativeMode,
-                inventory, vanillaTarget)) {
+                inventory, vanillaTarget, networkHandler)) {
             ci.cancel();
         }
     }

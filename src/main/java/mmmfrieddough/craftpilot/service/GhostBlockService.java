@@ -4,10 +4,12 @@ import java.util.Map;
 
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket;
 import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -39,13 +41,14 @@ public final class GhostBlockService {
      * @return true if a ghost block was successfully picked, false otherwise
      */
     public static boolean handleGhostBlockPick(IWorldManager worldManager, Camera camera, double reach,
-            FeatureSet enabledFeatures, boolean creativeMode, PlayerInventory inventory, HitResult vanillaTarget) {
+            FeatureSet enabledFeatures, boolean creativeMode, PlayerInventory inventory, HitResult vanillaTarget,
+            ClientPlayNetworkHandler networkHandler) {
         GhostBlockTarget target = getCurrentTarget();
         if (target == null) {
             return false;
         }
 
-        pickGhostBlock(target.state(), enabledFeatures, creativeMode, inventory);
+        pickGhostBlock(target.state(), enabledFeatures, creativeMode, inventory, networkHandler);
         return true;
     }
 
@@ -123,7 +126,7 @@ public final class GhostBlockService {
      * @param inventory       Player's inventory to modify
      */
     private static void pickGhostBlock(BlockState state, FeatureSet enabledFeatures, boolean creativeMode,
-            PlayerInventory inventory) {
+            PlayerInventory inventory, ClientPlayNetworkHandler networkHandler) {
         // Get item as stack
         ItemStack itemStack = state.getBlock().asItem().getDefaultStack();
 
@@ -143,6 +146,8 @@ public final class GhostBlockService {
                     // Add item to inventory
                     inventory.swapStackWithHotbar(itemStack);
                     itemStack.setBobbingAnimationTime(5);
+                    networkHandler
+                            .sendPacket(new CreativeInventoryActionC2SPacket(36 + inventory.selectedSlot, itemStack));
                 }
             }
         }
