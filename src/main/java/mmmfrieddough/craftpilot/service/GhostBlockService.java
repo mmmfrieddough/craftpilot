@@ -32,17 +32,14 @@ public final class GhostBlockService {
      * Handles ghost block picking interaction by selecting or adding the targeted
      * block to inventory
      * 
-     * @param worldManager    Manager handling ghost block state and interactions
-     * @param camera          Camera instance providing position and view direction
-     * @param reach           Maximum interaction range in blocks
      * @param enabledFeatures Set of enabled game features
      * @param creativeMode    Whether the player is in creative mode
      * @param inventory       Player's inventory
+     * @param networkHandler  Network handler for sending inventory updates
      * @return true if a ghost block was successfully picked, false otherwise
      */
-    public static boolean handleGhostBlockPick(IWorldManager worldManager, Camera camera, double reach,
-            FeatureSet enabledFeatures, boolean creativeMode, PlayerInventory inventory, HitResult vanillaTarget,
-            ClientPlayNetworkHandler networkHandler) {
+    public static boolean handleGhostBlockPick(FeatureSet enabledFeatures, boolean creativeMode,
+            PlayerInventory inventory, ClientPlayNetworkHandler networkHandler) {
         GhostBlockTarget target = getCurrentTarget();
         if (target == null) {
             return false;
@@ -56,13 +53,10 @@ public final class GhostBlockService {
      * Handles ghost block breaking interaction by removing the targeted ghost block
      * 
      * @param worldManager Manager handling ghost block state and interactions
-     * @param camera       Camera instance providing position and view direction
-     * @param reach        Maximum interaction range in blocks
      * @param player       The client player entity performing the break action
      * @return true if a ghost block was successfully broken, false otherwise
      */
-    public static boolean handleGhostBlockBreak(IWorldManager worldManager, Camera camera, double reach,
-            ClientPlayerEntity player, HitResult vanillaTarget) {
+    public static boolean handleGhostBlockBreak(IWorldManager worldManager, ClientPlayerEntity player) {
         GhostBlockTarget target = getCurrentTarget();
         if (target == null) {
             return false;
@@ -77,11 +71,13 @@ public final class GhostBlockService {
      * Finds the nearest ghost block along the player's line of sight using
      * raycasting
      * 
-     * @param ghostBlocks Map of ghost block positions to their corresponding block
-     *                    states
-     * @param cameraPos   Starting position for the raycast
-     * @param lookVec     Direction vector of the player's view
-     * @param reach       Maximum reach distance in blocks
+     * @param ghostBlocks   Map of ghost block positions to their corresponding
+     *                      block
+     *                      states
+     * @param cameraPos     Starting position for the raycast
+     * @param lookVec       Direction vector of the player's view
+     * @param reach         Maximum reach distance in blocks
+     * @param vanillaTarget The vanilla target result from the client
      * @return The position of the nearest ghost block hit by the raycast, or null
      *         if none found
      */
@@ -124,6 +120,7 @@ public final class GhostBlockService {
      * @param creativeMode    Whether the player is in creative mode for inventory
      *                        manipulation
      * @param inventory       Player's inventory to modify
+     * @param networkHandler  Network handler for sending inventory updates
      */
     private static void pickGhostBlock(BlockState state, FeatureSet enabledFeatures, boolean creativeMode,
             PlayerInventory inventory, ClientPlayNetworkHandler networkHandler) {
@@ -156,9 +153,10 @@ public final class GhostBlockService {
     /**
      * Gets the ghost block the player is currently targeting
      * 
-     * @param worldManager Manager handling ghost block state and interactions
-     * @param camera       Camera instance providing position and view direction
-     * @param reach        Maximum interaction range in blocks
+     * @param worldManager  Manager handling ghost block state and interactions
+     * @param camera        Camera instance providing position and view direction
+     * @param reach         Maximum interaction range in blocks
+     * @param vanillaTarget The vanilla target result from the client
      * @return A GhostBlockTarget containing the position and state of the targeted
      *         block,
      *         or null if no ghost block is being targeted

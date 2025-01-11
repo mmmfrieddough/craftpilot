@@ -12,11 +12,8 @@ import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.Camera;
-import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.resource.featuretoggle.FeatureSet;
-import net.minecraft.util.hit.HitResult;
 
 /**
  * Mixin to handle ghost block interactions in the Minecraft client.
@@ -28,18 +25,13 @@ public class MinecraftClientMixin {
     @Inject(method = "doItemPick", at = @At("HEAD"), cancellable = true)
     private void onDoItemPick(CallbackInfo ci) {
         // Extract necessary information
-        IWorldManager worldManager = CraftPilot.getInstance().getWorldManager();
         MinecraftClient client = MinecraftClient.getInstance();
-        Camera camera = client.gameRenderer.getCamera();
-        double reach = client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
         FeatureSet enabledFeatures = client.player.getWorld().getEnabledFeatures();
         boolean creativeMode = client.interactionManager.getCurrentGameMode().isCreative();
         PlayerInventory inventory = client.player.getInventory();
-        HitResult vanillaTarget = client.crosshairTarget;
         ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
 
-        if (GhostBlockService.handleGhostBlockPick(worldManager, camera, reach, enabledFeatures, creativeMode,
-                inventory, vanillaTarget, networkHandler)) {
+        if (GhostBlockService.handleGhostBlockPick(enabledFeatures, creativeMode, inventory, networkHandler)) {
             ci.cancel();
         }
     }
@@ -49,12 +41,9 @@ public class MinecraftClientMixin {
         // Extract necessary information
         IWorldManager worldManager = CraftPilot.getInstance().getWorldManager();
         MinecraftClient client = MinecraftClient.getInstance();
-        Camera camera = client.gameRenderer.getCamera();
-        double reach = client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
         ClientPlayerEntity player = client.player;
-        HitResult vanillaTarget = client.crosshairTarget;
 
-        if (GhostBlockService.handleGhostBlockBreak(worldManager, camera, reach, player, vanillaTarget)) {
+        if (GhostBlockService.handleGhostBlockBreak(worldManager, player)) {
             cir.setReturnValue(true);
         }
     }
