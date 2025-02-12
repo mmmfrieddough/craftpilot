@@ -2,6 +2,7 @@ package mmmfrieddough.craftpilot.service;
 
 import java.util.Map;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
@@ -9,8 +10,12 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
 import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket;
+import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.resource.featuretoggle.FeatureSet;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -36,16 +41,25 @@ public final class GhostBlockService {
      * @param creativeMode    Whether the player is in creative mode
      * @param inventory       Player's inventory
      * @param networkHandler  Network handler for sending inventory updates
+     * @param screenHandler   Current screen handler for the player
      * @return true if a ghost block was successfully picked, false otherwise
      */
     public static boolean handleGhostBlockPick(FeatureSet enabledFeatures, boolean creativeMode,
-            PlayerInventory inventory, ClientPlayNetworkHandler networkHandler) {
+            PlayerInventory inventory, ClientPlayNetworkHandler networkHandler, ScreenHandler screenHandler) {
+        // Get current target
         GhostBlockTarget target = getCurrentTarget();
         if (target == null) {
             return false;
         }
 
-        pickGhostBlock(target.state(), enabledFeatures, creativeMode, inventory, networkHandler);
+        // Get item as stack
+        ItemStack itemStack = target.state.getBlock().asItem().getDefaultStack();
+
+        // Check if item is valid and pick it
+        if (!itemStack.isEmpty()) {
+            onPickItem(enabledFeatures, creativeMode, inventory, networkHandler, screenHandler, itemStack);
+        }
+
         return true;
     }
 
@@ -112,41 +126,31 @@ public final class GhostBlockService {
         return nearestPos;
     }
 
-    /**
-     * Picks the ghost block by adding or selecting it in the player's inventory
-     * 
-     * @param state           Block state to pick and convert to item
-     * @param enabledFeatures Set of enabled game features for item validation
-     * @param creativeMode    Whether the player is in creative mode for inventory
-     *                        manipulation
-     * @param inventory       Player's inventory to modify
-     * @param networkHandler  Network handler for sending inventory updates
-     */
-    private static void pickGhostBlock(BlockState state, FeatureSet enabledFeatures, boolean creativeMode,
-            PlayerInventory inventory, ClientPlayNetworkHandler networkHandler) {
-        // Get item as stack
-        ItemStack itemStack = state.getBlock().asItem().getDefaultStack();
-
-        if (!itemStack.isEmpty()) {
-            // Check if item is enabled
-            if (itemStack.isItemEnabled(enabledFeatures)) {
-                // Check if item is already in inventory
-                int i = inventory.getSlotWithStack(itemStack);
-                if (i != -1) {
-                    // Select slot if in hotbar, otherwise swap with hotbar
-                    if (PlayerInventory.isValidHotbarIndex(i)) {
-                        inventory.selectedSlot = i;
-                    } else {
-                        inventory.swapSlotWithHotbar(i);
-                    }
-                } else if (creativeMode) {
-                    // Add item to inventory
-                    inventory.swapStackWithHotbar(itemStack);
-                    itemStack.setBobbingAnimationTime(5);
-                    networkHandler
-                            .sendPacket(new CreativeInventoryActionC2SPacket(36 + inventory.selectedSlot, itemStack));
+    private static void onPickItem(FeatureSet features, boolean creativeMode, PlayerInventory playerInventory,
+            ClientPlayNetworkHandler networkHandler, ScreenHandler screenHandler, ItemStack stack) {
+        // Check if item is enabled
+        if (stack.isItemEnabled(features)) {
+            // Check if item is already in inventory
+            int i = playerInventory.getSlotWithStack(stack);
+            if (i != -1) {
+                // Check if item is in hotbar
+                if (PlayerInventory.isValidHotbarIndex(i)) {
+                    // Select the slot
+                    playerInventory.selectedSlot = i;
+                } else {
+                    // Swap the item with the slot
+                    playerInventory.swapSlotWithHotbar(i);
+                    networkHandler.sendPacket(new ClickSlotC2SPacket(screenHandler.syncId, screenHandler.getRevision(),
+                            i, playerInventory.selectedSlot, SlotActionType.SWAP, stack, Int2ObjectMaps.emptyMap()));
                 }
+            } else if (creativeMode) {
+                // Add item to inventory
+                playerInventory.swapStackWithHotbar(stack);
+                stack.setBobbingAnimationTime(5);
+                networkHandler
+                        .sendPacket(new CreativeInventoryActionC2SPacket(36 + playerInventory.selectedSlot, stack));
             }
+            networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(playerInventory.selectedSlot));
         }
     }
 

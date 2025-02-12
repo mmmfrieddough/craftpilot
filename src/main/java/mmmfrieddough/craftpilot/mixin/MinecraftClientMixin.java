@@ -14,6 +14,7 @@ import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.resource.featuretoggle.FeatureSet;
+import net.minecraft.screen.ScreenHandler;
 
 /**
  * Mixin to handle ghost block interactions in the Minecraft client.
@@ -30,8 +31,10 @@ public class MinecraftClientMixin {
         boolean creativeMode = client.interactionManager.getCurrentGameMode().isCreative();
         PlayerInventory inventory = client.player.getInventory();
         ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
+        ScreenHandler screenHandler = client.player.currentScreenHandler;
 
-        if (GhostBlockService.handleGhostBlockPick(enabledFeatures, creativeMode, inventory, networkHandler)) {
+        if (GhostBlockService.handleGhostBlockPick(enabledFeatures, creativeMode, inventory, networkHandler,
+                screenHandler)) {
             ci.cancel();
         }
     }
