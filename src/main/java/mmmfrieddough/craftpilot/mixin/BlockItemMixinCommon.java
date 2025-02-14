@@ -11,7 +11,7 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemPlacementContext;
 
 @Mixin(BlockItem.class)
-public class BlockItemMixin {
+public class BlockItemMixinCommon {
     // Override the default block state returned by the getPlacementState method to
     // one from the global state
     @Inject(method = "getPlacementState", at = @At("HEAD"), cancellable = true)

@@ -3,9 +3,10 @@
     "package": "mmmfrieddough.craftpilot.mixin",
     "compatibilityLevel": "JAVA_17",
     "mixins": [
-        "BlockItemMixin"
+        "BlockItemMixinCommon"
     ],
     "client": [
+        "BlockItemMixinClient",
         "WorldRendererMixin",
         "MinecraftClientMixin",
         "ClientPlayerInteractionManagerMixin"

@@ -23,7 +23,7 @@
 		]
 	},
 	"mixins": [
-		"craftpilot.mixins.json"
+		"mixins.craftpilot.json"
 	],
 	"depends": {
 		"java": ">=21",

@@ -44,14 +44,14 @@ public class BlockPlacementService {
         // Always stop the current request when user places a block
         httpService.stop();
 
+        // Check if the block is replacing a ghost block
         BlockState ghostBlockState = worldManager.getGhostBlockState(placedBlockPos);
-        BlockState blockState = world.getBlockState(placedBlockPos);
-
         if (ghostBlockState == null) {
             requestNewSuggestions(world);
             return;
         }
 
+        BlockState blockState = world.getBlockState(placedBlockPos);
         processBlockPlacement(world, ghostBlockState, blockState);
     }
 

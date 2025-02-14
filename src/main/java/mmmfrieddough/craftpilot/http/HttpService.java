@@ -9,6 +9,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeoutException;
@@ -60,6 +61,9 @@ public class HttpService {
                 .thenAccept(response -> handleResponse(response, requestId, origin))
                 .exceptionally(throwable -> {
                     Throwable cause = throwable.getCause();
+                    if (cause instanceof CancellationException) {
+                        return null;
+                    }
                     if (cause instanceof ConnectException) {
                         String setupUrl = "https://github.com/mmmfrieddough/craftpilot#setup";
                         Text message = Text
