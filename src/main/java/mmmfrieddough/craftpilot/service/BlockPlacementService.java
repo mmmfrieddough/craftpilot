@@ -41,6 +41,9 @@ public class BlockPlacementService {
         }
         blockPlacementPending = false;
 
+        // Always stop the current request when user places a block
+        httpService.stop();
+
         BlockState ghostBlockState = worldManager.getGhostBlockState(placedBlockPos);
         BlockState blockState = world.getBlockState(placedBlockPos);
 
@@ -73,13 +76,13 @@ public class BlockPlacementService {
 
     private void handleNonMatchingBlock(World world) {
         nonMatchingBlockCount++;
-        httpService.stop(); // Stop current request when user deviates
 
         // Clear all suggestions if too many non-matching blocks
         if (nonMatchingBlockCount >= config.general.nonMatchingBlocksThreshold) {
             worldManager.clearBlockStates();
             resetCounters();
-            requestNewSuggestions(world); // Request new suggestions after clearing all
+            // Request new suggestions after clearing all
+            requestNewSuggestions(world);
             return;
         }
     }
@@ -90,9 +93,8 @@ public class BlockPlacementService {
     }
 
     private void requestNewSuggestions(World world) {
-        httpService.stop();
         String[][][] matrix = getBlocksMatrix(world, placedBlockPos);
-        httpService.sendRequest(matrix, config.model);
+        httpService.sendRequest(config.model, matrix, placedBlockPos);
     }
 
     private String[][][] getBlocksMatrix(World world, BlockPos centerPos) {
@@ -124,19 +126,12 @@ public class BlockPlacementService {
     }
 
     private void processResponse(ResponseItem item) {
-        BlockPos pos = calculateResponsePosition(item);
         BlockState blockState = BlockStateHelper.parseBlockState(item.getBlockState());
         if (blockState.isAir()) {
             return;
         }
+        BlockPos pos = new BlockPos(item.getX(), item.getY(), item.getZ());
         worldManager.setBlockState(pos, blockState);
-    }
-
-    private BlockPos calculateResponsePosition(ResponseItem item) {
-        return placedBlockPos.add(
-                item.getX() - MATRIX_OFFSET,
-                item.getY() - MATRIX_OFFSET,
-                item.getZ() - MATRIX_OFFSET);
     }
 
     public void clearAll() {

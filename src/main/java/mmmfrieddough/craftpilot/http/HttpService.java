@@ -20,10 +20,14 @@ import com.google.gson.Gson;
 import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.ClickEvent;
 
 public class HttpService {
+    private static final int MATRIX_SIZE = 11;
+    private static final int MATRIX_OFFSET = MATRIX_SIZE / 2;
+
     private static final Logger LOGGER = CraftPilot.LOGGER;
 
     private final HttpClient httpClient;
@@ -38,7 +42,7 @@ public class HttpService {
         this.responseQueue = new ConcurrentLinkedQueue<>();
     }
 
-    public void sendRequest(String[][][] matrix, ModConfig.Model config) {
+    public void sendRequest(ModConfig.Model config, String[][][] matrix, BlockPos origin) {
         final long requestId = currentRequestId;
 
         Request request = buildRequest(matrix, config);
@@ -53,7 +57,7 @@ public class HttpService {
         currentRequestFuture = httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
 
         currentRequestFuture
-                .thenAccept(response -> handleResponse(response, requestId))
+                .thenAccept(response -> handleResponse(response, requestId, origin))
                 .exceptionally(throwable -> {
                     Throwable cause = throwable.getCause();
                     if (cause instanceof ConnectException) {
@@ -103,7 +107,14 @@ public class HttpService {
         return request;
     }
 
-    private void handleResponse(HttpResponse<InputStream> response, long requestId) {
+    private BlockPos calculateResponsePosition(ResponseItem item, BlockPos placedBlockPos) {
+        return placedBlockPos.add(
+                item.getX() - MATRIX_OFFSET,
+                item.getY() - MATRIX_OFFSET,
+                item.getZ() - MATRIX_OFFSET);
+    }
+
+    private void handleResponse(HttpResponse<InputStream> response, long requestId, BlockPos origin) {
         LOGGER.info("Response status code: " + response.statusCode());
 
         if (response.statusCode() != 200) {
@@ -120,6 +131,9 @@ public class HttpService {
                     return;
                 }
                 ResponseItem responseItem = gson.fromJson(line, ResponseItem.class);
+                BlockPos position = calculateResponsePosition(responseItem, origin);
+                responseItem = new ResponseItem(responseItem.getBlockState(), position.getX(), position.getY(),
+                        position.getZ());
                 responseQueue.offer(responseItem);
             }
         } catch (Exception e) {

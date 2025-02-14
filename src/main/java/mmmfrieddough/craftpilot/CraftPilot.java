@@ -25,7 +25,7 @@ public class CraftPilot implements ModInitializer {
 	private static CraftPilot instance;
 	private static ModConfig config;
 	private final IWorldManager worldManager;
-	private BlockPlacementService blockPlacementService;
+	private static BlockPlacementService blockPlacementService;
 
 	public CraftPilot() {
 		this.worldManager = new WorldManager();
@@ -36,7 +36,7 @@ public class CraftPilot implements ModInitializer {
 		LOGGER.info("Initializing Craftpilot");
 		instance = this;
 		initializeConfig();
-		this.blockPlacementService = new BlockPlacementService(new HttpService(), worldManager, config);
+		CraftPilot.blockPlacementService = new BlockPlacementService(new HttpService(), worldManager, config);
 		KeyBindings.register();
 		registerCallbacks();
 		PayloadTypeRegistry.playC2S().register(PlayerPlaceBlockPayload.ID, PlayerPlaceBlockPayload.CODEC);
@@ -49,15 +49,6 @@ public class CraftPilot implements ModInitializer {
 	}
 
 	private void registerCallbacks() {
-		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
-			if (!world.isClient || !config.general.enable) {
-				return ActionResult.PASS;
-			}
-
-			blockPlacementService.onBlockPlaced(hitResult.getBlockPos().offset(hitResult.getSide()));
-			return ActionResult.PASS;
-		});
-
 		ClientTickEvents.END_WORLD_TICK.register(blockPlacementService::handleWorldTick);
 		ClientTickEvents.END_CLIENT_TICK.register(this::handleClientTick);
 	}
@@ -81,5 +72,9 @@ public class CraftPilot implements ModInitializer {
 
 	public static ModConfig getConfig() {
 		return config;
+	}
+
+	public static BlockPlacementService getBlockPlacementService() {
+		return blockPlacementService;
 	}
 }

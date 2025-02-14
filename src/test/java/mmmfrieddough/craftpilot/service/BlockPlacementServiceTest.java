@@ -66,7 +66,7 @@ class BlockPlacementServiceTest {
         service.handleWorldTick(world);
 
         verify(worldManager, never()).getGhostBlockState(any());
-        verify(httpService, never()).sendRequest(any(), any());
+        verify(httpService, never()).sendRequest(any(), any(), any());
     }
 
     @Test
@@ -77,7 +77,7 @@ class BlockPlacementServiceTest {
 
         service.handleWorldTick(world);
 
-        verify(httpService).sendRequest(any(), eq(config.model));
+        verify(httpService).sendRequest(eq(config.model), any(), any());
     }
 
     @Test
@@ -136,7 +136,7 @@ class BlockPlacementServiceTest {
             service.onBlockPlaced(testPos);
         }
 
-        verify(httpService).sendRequest(any(), eq(config.model));
+        verify(httpService).sendRequest(eq(config.model), any(), any());
     }
 
     @Test
@@ -153,6 +153,6 @@ class BlockPlacementServiceTest {
         }
 
         verify(worldManager).clearBlockStates();
-        verify(httpService).sendRequest(any(), eq(config.model));
+        verify(httpService).sendRequest(eq(config.model), any(), any());
     }
 }
