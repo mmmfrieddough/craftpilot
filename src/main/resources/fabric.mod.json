@@ -15,7 +15,7 @@
 	"icon": "assets/craftpilot/icon.png",
 	"environment": "client",
 	"entrypoints": {
-		"client": [
+		"main": [
 			"mmmfrieddough.craftpilot.CraftPilot"
 		],
 		"modmenu": [

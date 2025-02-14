@@ -20,6 +20,8 @@ public class ModConfig implements ConfigData {
         public int nonMatchingBlocksThreshold = 3;
         @Tooltip
         public int placedBlocksThreshold = 3;
+        @Tooltip
+        public boolean enableEasyPlace = true;
     }
 
     @Category("Model")
