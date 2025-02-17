@@ -71,7 +71,7 @@ class BlockPlacementServiceTest {
 
     @Test
     void handleWorldTick_BlockPlacedNoGhost_RequestsNewSuggestions() {
-        service.onBlockPlaced(testPos);
+        service.onPlayerBlockPlaced(testPos);
         when(worldManager.getGhostBlockState(testPos)).thenReturn(null);
         when(worldManager.getBlockState(eq(world), any(BlockPos.class))).thenReturn(stoneState);
 
@@ -82,7 +82,7 @@ class BlockPlacementServiceTest {
 
     @Test
     void handleWorldTick_BlockMatchesGhost_ClearsGhostBlock() {
-        service.onBlockPlaced(testPos);
+        service.onPlayerBlockPlaced(testPos);
         when(worldManager.getGhostBlockState(testPos)).thenReturn(stoneState);
         when(world.getBlockState(testPos)).thenReturn(stoneState);
 
@@ -93,7 +93,7 @@ class BlockPlacementServiceTest {
 
     @Test
     void handleWorldTick_BlockMismatchesGhost_StopsHttpService() {
-        service.onBlockPlaced(testPos);
+        service.onPlayerBlockPlaced(testPos);
         when(worldManager.getGhostBlockState(testPos)).thenReturn(stoneState);
         when(world.getBlockState(testPos)).thenReturn(Blocks.DIRT.getDefaultState());
 
@@ -107,7 +107,7 @@ class BlockPlacementServiceTest {
         ResponseItem response = new ResponseItem("minecraft:stone", 5, 5, 5);
 
         when(httpService.getNextResponse()).thenReturn(response).thenReturn(null);
-        service.onBlockPlaced(testPos);
+        service.onPlayerBlockPlaced(testPos);
 
         service.processResponses();
 
@@ -125,7 +125,7 @@ class BlockPlacementServiceTest {
 
     @Test
     void handleWorldTick_ExceedsThreshold_RequestsNewSuggestions() {
-        service.onBlockPlaced(testPos);
+        service.onPlayerBlockPlaced(testPos);
         when(worldManager.getGhostBlockState(testPos)).thenReturn(stoneState);
         when(world.getBlockState(testPos)).thenReturn(stoneState);
         when(worldManager.getBlockState(eq(world), any(BlockPos.class))).thenReturn(stoneState);
@@ -133,7 +133,7 @@ class BlockPlacementServiceTest {
         // Simulate placing blocks up to threshold
         for (int i = 0; i < config.general.placedBlocksThreshold; i++) {
             service.handleWorldTick(world);
-            service.onBlockPlaced(testPos);
+            service.onPlayerBlockPlaced(testPos);
         }
 
         verify(httpService).sendRequest(eq(config.model), any(), any());
@@ -141,7 +141,7 @@ class BlockPlacementServiceTest {
 
     @Test
     void handleWorldTick_ExceedsNonMatchingThreshold_ClearsAllAndRequests() {
-        service.onBlockPlaced(testPos);
+        service.onPlayerBlockPlaced(testPos);
         when(worldManager.getGhostBlockState(testPos)).thenReturn(stoneState);
         when(world.getBlockState(testPos)).thenReturn(Blocks.DIRT.getDefaultState());
         when(worldManager.getBlockState(eq(world), any(BlockPos.class))).thenReturn(stoneState);
@@ -149,7 +149,7 @@ class BlockPlacementServiceTest {
         // Simulate non-matching blocks up to threshold
         for (int i = 0; i < config.general.nonMatchingBlocksThreshold; i++) {
             service.handleWorldTick(world);
-            service.onBlockPlaced(testPos);
+            service.onPlayerBlockPlaced(testPos);
         }
 
         verify(worldManager).clearBlockStates();
