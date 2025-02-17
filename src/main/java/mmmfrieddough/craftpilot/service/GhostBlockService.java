@@ -4,6 +4,7 @@ import java.util.Map;
 
 import net.minecraft.client.MinecraftClient;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.network.payloads.PlayerPlaceBlockPayload;
 import mmmfrieddough.craftpilot.util.GhostBlockGlobal;
 import mmmfrieddough.craftpilot.world.IWorldManager;
@@ -82,6 +83,7 @@ public final class GhostBlockService {
 
         worldManager.clearBlockState(target.pos());
         player.swingHand(Hand.MAIN_HAND);
+        CraftPilot.getBlockPlacementService().cancelCurrentRequest();
         return true;
     }
 

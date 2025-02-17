@@ -134,6 +134,10 @@ public class BlockPlacementService {
         worldManager.setBlockState(pos, blockState);
     }
 
+    public void cancelCurrentRequest() {
+        httpService.stop();
+    }
+
     public void clearAll() {
         httpService.stop();
         worldManager.clearBlockStates();
