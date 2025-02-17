@@ -7,7 +7,10 @@ import org.lwjgl.opengl.GL11;
 import com.mojang.blaze3d.systems.RenderSystem;
 
 import mmmfrieddough.craftpilot.config.ModConfig.Rendering;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.RenderLayer;
@@ -33,24 +36,37 @@ public final class GhostBlockRenderService {
         double cameraZ = camera.getPos().z;
 
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, opacity);
-        VertexConsumer translucentVertices = immediate.getBuffer(RenderLayer.getTranslucent());
+        RenderLayer renderLayer = RenderLayer.getTranslucent();
+        VertexConsumer vertexConsumer = immediate.getBuffer(renderLayer);
 
         // Render ghost blocks
         for (Map.Entry<BlockPos, BlockState> entry : ghostBlocks.entrySet()) {
             BlockPos pos = entry.getKey();
             // Only render blocks within view distance
-            if (pos.isWithinDistance(cameraPos, renderDistance)) {
-                matrices.push();
-                matrices.translate(pos.getX() - cameraX, pos.getY() - cameraY, pos.getZ() - cameraZ);
-
-                client.getBlockRenderManager().renderBlock(entry.getValue(), pos, client.world, matrices,
-                        translucentVertices, false, client.world.random);
-
-                matrices.pop();
+            if (!pos.isWithinDistance(cameraPos, renderDistance)) {
+                continue;
             }
+
+            BlockState state = entry.getValue();
+            Block block = state.getBlock();
+
+            matrices.push();
+            matrices.translate(pos.getX() - cameraX, pos.getY() - cameraY, pos.getZ() - cameraZ);
+
+            if (block instanceof BlockEntityProvider provider) {
+                BlockEntity blockEntity = provider.createBlockEntity(pos, state);
+                blockEntity.setWorld(client.world);
+                client.getBlockEntityRenderDispatcher().render(blockEntity, 0f, matrices, immediate);
+            } else {
+                client.getBlockRenderManager().renderBlock(state, pos, client.world, matrices, vertexConsumer, false,
+                        client.world.random);
+            }
+
+            matrices.pop();
         }
 
         immediate.draw();
+
     }
 
     /**
