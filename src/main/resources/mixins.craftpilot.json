@@ -9,7 +9,8 @@
         "BlockItemMixinClient",
         "WorldRendererMixin",
         "MinecraftClientMixin",
-        "ClientPlayerInteractionManagerMixin"
+        "ClientPlayerInteractionManagerMixin",
+        "ClientBedBlockMixin"
     ],
     "injectors": {
         "defaultRequire": 1
