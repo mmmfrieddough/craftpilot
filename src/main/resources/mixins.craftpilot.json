@@ -11,7 +11,9 @@
         "MinecraftClientMixin",
         "ClientPlayerInteractionManagerMixin",
         "ClientBedBlockMixin",
-        "WorldMixin"
+        "WorldMixin",
+        "AbstractBlockMixin",
+        "DoorBlockMixin"
     ],
     "injectors": {
         "defaultRequire": 1
