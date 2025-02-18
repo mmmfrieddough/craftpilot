@@ -1,0 +1,21 @@
+{
+    "required": true,
+    "package": "mmmfrieddough.craftpilot.mixin",
+    "compatibilityLevel": "JAVA_21",
+    "mixins": [
+        "BlockItemMixinCommon"
+    ],
+    "client": [
+        "BlockItemMixinClient",
+        "WorldRendererMixin",
+        "MinecraftClientMixin",
+        "ClientPlayerInteractionManagerMixin",
+        "ClientBedBlockMixin",
+        "WorldMixin",
+        "AbstractBlockMixin",
+        "DoorBlockMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

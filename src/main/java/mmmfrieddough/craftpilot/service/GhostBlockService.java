@@ -2,12 +2,17 @@ package mmmfrieddough.craftpilot.service;
 
 import java.util.Map;
 
+import net.minecraft.client.MinecraftClient;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import mmmfrieddough.craftpilot.CraftPilot;
+import mmmfrieddough.craftpilot.network.payloads.PlayerPlaceBlockPayload;
+import mmmfrieddough.craftpilot.util.GhostBlockGlobal;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
+import net.minecraft.world.GameMode;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
@@ -78,7 +83,63 @@ public final class GhostBlockService {
 
         worldManager.clearBlockState(target.pos());
         player.swingHand(Hand.MAIN_HAND);
+        CraftPilot.getBlockPlacementService().cancelCurrentRequest();
         return true;
+    }
+
+    public static boolean handleGhostBlockPlace(MinecraftClient client) {
+        GhostBlockTarget target = getCurrentTarget();
+
+        if (target == null || !client.world.getWorldBorder().contains(target.pos())
+                || client.interactionManager.getCurrentGameMode() == GameMode.SPECTATOR) {
+            return false;
+        }
+
+        boolean isCreative = client.interactionManager.getCurrentGameMode() == GameMode.CREATIVE;
+
+        // Try both hands
+        for (Hand hand : Hand.values()) {
+            ItemStack itemStack = client.player.getStackInHand(hand);
+
+            // Special case for creative mode main hand - allow empty hand
+            boolean emptyHandCreative = isCreative && hand == Hand.MAIN_HAND && itemStack.isEmpty();
+            if (emptyHandCreative) {
+                // Temporarily set a fake item stack for the interaction
+                itemStack = target.state.getBlock().asItem().getDefaultStack();
+                client.player.setStackInHand(hand, itemStack);
+            } else if (!itemStack.isItemEnabled(client.world.getEnabledFeatures()) || itemStack.isEmpty()
+                    || !itemStack.isOf(target.state.getBlock().asItem())
+                    || client.player.getItemCooldownManager().isCoolingDown(itemStack)) {
+                continue;
+            }
+
+            BlockHitResult blockHitResult = new BlockHitResult(client.player.getPos(),
+                    client.player.getHorizontalFacing(), target.pos, false);
+
+            // Set the global ghost block state and payload before interacting
+            GhostBlockGlobal.blockState = target.state;
+            GhostBlockGlobal.payload = new PlayerPlaceBlockPayload(hand, target.pos, target.state);
+            client.interactionManager.interactBlock(client.player, hand, blockHitResult);
+            GhostBlockGlobal.blockState = null;
+            GhostBlockGlobal.payload = null;
+
+            // Restore empty hand if we temporarily set it
+            if (emptyHandCreative) {
+                client.player.setStackInHand(hand, ItemStack.EMPTY);
+            }
+
+            // Play animation
+            client.player.swingHand(hand);
+            int previousCount = itemStack.getCount();
+            if (!itemStack.isEmpty() && (itemStack.getCount() != previousCount
+                    || client.interactionManager.hasCreativeInventory())) {
+                client.gameRenderer.firstPersonRenderer.resetEquipProgress(hand);
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -126,6 +187,17 @@ public final class GhostBlockService {
         return nearestPos;
     }
 
+    /**
+     * Handles picking up a ghost block by selecting or adding the targeted block to
+     * the player's inventory
+     * 
+     * @param features        Set of enabled game features
+     * @param creativeMode    Whether the player is in creative mode
+     * @param playerInventory Player's inventory
+     * @param networkHandler  Network handler for sending inventory updates
+     * @param screenHandler   Current screen handler for the player
+     * @param stack           The item stack representing the ghost block
+     */
     private static void onPickItem(FeatureSet features, boolean creativeMode, PlayerInventory playerInventory,
             ClientPlayNetworkHandler networkHandler, ScreenHandler screenHandler, ItemStack stack) {
         // Check if item is enabled

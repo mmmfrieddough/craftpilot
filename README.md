@@ -46,6 +46,7 @@ Craftpilot requires a companion program that runs the ML model. Here's how to ge
 2. **Working with Suggestions**
 
    - Accept suggestions by placing blocks where they're shown
+   - With easy place mode (enabled by default) you can place blocks exactly as they appear in the suggestions, without needing to worry about orientation or adjacent blocks. Simply right-click on the suggested block to place it in the correct orientation and state. In creative mode, you can even place blocks with an empty hand.
    - As you build, new suggestions will automatically appear
    - Use the pick block function (middle mouse) on suggestions to quickly select blocks
    - Press C to clear all current suggestions (key configurable in controls)
