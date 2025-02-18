@@ -95,10 +95,19 @@ public final class GhostBlockService {
             return false;
         }
 
+        boolean isCreative = client.interactionManager.getCurrentGameMode() == GameMode.CREATIVE;
+
         // Try both hands
         for (Hand hand : Hand.values()) {
             ItemStack itemStack = client.player.getStackInHand(hand);
-            if (!itemStack.isItemEnabled(client.world.getEnabledFeatures()) || itemStack.isEmpty()
+
+            // Special case for creative mode main hand - allow empty hand
+            boolean emptyHandCreative = isCreative && hand == Hand.MAIN_HAND && itemStack.isEmpty();
+            if (emptyHandCreative) {
+                // Temporarily set a fake item stack for the interaction
+                itemStack = target.state.getBlock().asItem().getDefaultStack();
+                client.player.setStackInHand(hand, itemStack);
+            } else if (!itemStack.isItemEnabled(client.world.getEnabledFeatures()) || itemStack.isEmpty()
                     || !itemStack.isOf(target.state.getBlock().asItem())
                     || client.player.getItemCooldownManager().isCoolingDown(itemStack)) {
                 continue;
@@ -113,6 +122,11 @@ public final class GhostBlockService {
             client.interactionManager.interactBlock(client.player, hand, blockHitResult);
             GhostBlockGlobal.blockState = null;
             GhostBlockGlobal.payload = null;
+
+            // Restore empty hand if we temporarily set it
+            if (emptyHandCreative) {
+                client.player.setStackInHand(hand, ItemStack.EMPTY);
+            }
 
             // Play animation
             client.player.swingHand(hand);

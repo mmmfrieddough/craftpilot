@@ -40,7 +40,13 @@ public class ServerNetworking {
      */
     private static void handlePlacementPacket(ServerWorld world, ServerPlayerEntity player, Hand hand,
             BlockPos blockPos, BlockState blockState) {
-        ItemStack itemStack = player.getStackInHand(hand);
+        ItemStack itemStack;
+        // If the player is in creative mode with an empty hand, use the default stack
+        if (player.isCreative() && player.getStackInHand(hand).isEmpty()) {
+            itemStack = blockState.getBlock().asItem().getDefaultStack();
+        } else {
+            itemStack = player.getStackInHand(hand);
+        }
         if (player.isLoaded()) {
             if (itemStack.isItemEnabled(world.getEnabledFeatures())) {
                 if (player.canInteractWithBlockAt(blockPos, 1.0)) {
