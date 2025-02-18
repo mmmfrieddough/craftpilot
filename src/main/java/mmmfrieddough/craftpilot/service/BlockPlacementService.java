@@ -1,5 +1,8 @@
 package mmmfrieddough.craftpilot.service;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import mmmfrieddough.craftpilot.http.HttpService;
@@ -23,6 +26,7 @@ public class BlockPlacementService {
     private boolean blockPlacementPending = false;
     private int nonMatchingBlockCount = 0;
     private int placedBlockCount = 0;
+    private Set<BlockPos> ghostBlocksToRemove = new HashSet<>();
 
     public BlockPlacementService(HttpService httpService, IWorldManager worldManager, ModConfig config) {
         this.httpService = httpService;
@@ -31,25 +35,43 @@ public class BlockPlacementService {
     }
 
     public void onBlockPlaced(BlockPos pos) {
+        this.ghostBlocksToRemove.add(pos);
+    }
+
+    public void onPlayerBlockPlaced(BlockPos pos) {
         this.placedBlockPos = pos;
         this.blockPlacementPending = true;
     }
 
+    private void removeGhostBlocks() {
+        for (BlockPos pos : ghostBlocksToRemove) {
+            worldManager.clearBlockState(pos);
+        }
+        ghostBlocksToRemove.clear();
+    }
+
     public void handleWorldTick(World world) {
         if (!shouldProcessTick()) {
+            removeGhostBlocks();
             return;
         }
         blockPlacementPending = false;
 
+        // Always stop the current request when user places a block
+        httpService.stop();
+
+        // Check if the block is replacing a ghost block
         BlockState ghostBlockState = worldManager.getGhostBlockState(placedBlockPos);
-        BlockState blockState = world.getBlockState(placedBlockPos);
+
+        // Remove any ghost blocks that were replaced
+        removeGhostBlocks();
 
         if (ghostBlockState == null) {
             requestNewSuggestions(world);
-            return;
+        } else {
+            BlockState blockState = world.getBlockState(placedBlockPos);
+            processBlockPlacement(world, ghostBlockState, blockState);
         }
-
-        processBlockPlacement(world, ghostBlockState, blockState);
     }
 
     private boolean shouldProcessTick() {
@@ -58,7 +80,6 @@ public class BlockPlacementService {
 
     private void processBlockPlacement(World world, BlockState ghostBlockState, BlockState blockState) {
         placedBlockCount++;
-        worldManager.clearBlockState(placedBlockPos);
 
         if (!ghostBlockState.equals(blockState)) {
             handleNonMatchingBlock(world);
@@ -73,13 +94,13 @@ public class BlockPlacementService {
 
     private void handleNonMatchingBlock(World world) {
         nonMatchingBlockCount++;
-        httpService.stop(); // Stop current request when user deviates
 
         // Clear all suggestions if too many non-matching blocks
         if (nonMatchingBlockCount >= config.general.nonMatchingBlocksThreshold) {
             worldManager.clearBlockStates();
             resetCounters();
-            requestNewSuggestions(world); // Request new suggestions after clearing all
+            // Request new suggestions after clearing all
+            requestNewSuggestions(world);
             return;
         }
     }
@@ -90,9 +111,8 @@ public class BlockPlacementService {
     }
 
     private void requestNewSuggestions(World world) {
-        httpService.stop();
         String[][][] matrix = getBlocksMatrix(world, placedBlockPos);
-        httpService.sendRequest(matrix, config.model);
+        httpService.sendRequest(config.model, matrix, placedBlockPos);
     }
 
     private String[][][] getBlocksMatrix(World world, BlockPos centerPos) {
@@ -124,19 +144,16 @@ public class BlockPlacementService {
     }
 
     private void processResponse(ResponseItem item) {
-        BlockPos pos = calculateResponsePosition(item);
         BlockState blockState = BlockStateHelper.parseBlockState(item.getBlockState());
         if (blockState.isAir()) {
             return;
         }
+        BlockPos pos = new BlockPos(item.getX(), item.getY(), item.getZ());
         worldManager.setBlockState(pos, blockState);
     }
 
-    private BlockPos calculateResponsePosition(ResponseItem item) {
-        return placedBlockPos.add(
-                item.getX() - MATRIX_OFFSET,
-                item.getY() - MATRIX_OFFSET,
-                item.getZ() - MATRIX_OFFSET);
+    public void cancelCurrentRequest() {
+        httpService.stop();
     }
 
     public void clearAll() {

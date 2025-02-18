@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  checks: write
+  pull-requests: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,11 +31,14 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v3
 
-      - name: Build and Test
-        run: ./gradlew build test
+      - name: Build
+        run: ./gradlew assemble
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+      - name: Run Tests
+        run: ./gradlew test
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
         with:
-          name: build-artifacts
-          path: build/libs/
+          files: build/test-results/**/*.xml

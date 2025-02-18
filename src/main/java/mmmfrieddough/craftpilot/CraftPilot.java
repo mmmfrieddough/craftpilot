@@ -7,35 +7,38 @@ import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import mmmfrieddough.craftpilot.http.HttpService;
+import mmmfrieddough.craftpilot.network.ServerNetworking;
+import mmmfrieddough.craftpilot.network.payloads.PlayerPlaceBlockPayload;
 import mmmfrieddough.craftpilot.service.BlockPlacementService;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import mmmfrieddough.craftpilot.world.WorldManager;
-import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.event.player.UseBlockCallback;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.ActionResult;
 
-public class CraftPilot implements ClientModInitializer {
+public class CraftPilot implements ModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger(Reference.MOD_ID);
 
 	private static CraftPilot instance;
 	private static ModConfig config;
 	private final IWorldManager worldManager;
-	private BlockPlacementService blockPlacementService;
+	private static BlockPlacementService blockPlacementService;
 
 	public CraftPilot() {
 		this.worldManager = new WorldManager();
 	}
 
 	@Override
-	public void onInitializeClient() {
+	public void onInitialize() {
 		LOGGER.info("Initializing Craftpilot");
 		instance = this;
 		initializeConfig();
-		this.blockPlacementService = new BlockPlacementService(new HttpService(), worldManager, config);
+		CraftPilot.blockPlacementService = new BlockPlacementService(new HttpService(), worldManager, config);
 		KeyBindings.register();
 		registerCallbacks();
+		PayloadTypeRegistry.playC2S().register(PlayerPlaceBlockPayload.ID, PlayerPlaceBlockPayload.CODEC);
+		ServerNetworking.registerReceivers();
 	}
 
 	private void initializeConfig() {
@@ -44,15 +47,6 @@ public class CraftPilot implements ClientModInitializer {
 	}
 
 	private void registerCallbacks() {
-		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
-			if (!world.isClient || !config.general.enable) {
-				return ActionResult.PASS;
-			}
-
-			blockPlacementService.onBlockPlaced(hitResult.getBlockPos().offset(hitResult.getSide()));
-			return ActionResult.PASS;
-		});
-
 		ClientTickEvents.END_WORLD_TICK.register(blockPlacementService::handleWorldTick);
 		ClientTickEvents.END_CLIENT_TICK.register(this::handleClientTick);
 	}
@@ -76,5 +70,9 @@ public class CraftPilot implements ClientModInitializer {
 
 	public static ModConfig getConfig() {
 		return config;
+	}
+
+	public static BlockPlacementService getBlockPlacementService() {
+		return blockPlacementService;
 	}
 }
