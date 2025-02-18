@@ -82,9 +82,7 @@ class BlockPlacementServiceTest {
 
     @Test
     void handleWorldTick_BlockMatchesGhost_ClearsGhostBlock() {
-        service.onPlayerBlockPlaced(testPos);
-        when(worldManager.getGhostBlockState(testPos)).thenReturn(stoneState);
-        when(world.getBlockState(testPos)).thenReturn(stoneState);
+        service.onBlockPlaced(testPos);
 
         service.handleWorldTick(world);
 

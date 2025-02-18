@@ -43,8 +43,16 @@ public class BlockPlacementService {
         this.blockPlacementPending = true;
     }
 
+    private void removeGhostBlocks() {
+        for (BlockPos pos : ghostBlocksToRemove) {
+            worldManager.clearBlockState(pos);
+        }
+        ghostBlocksToRemove.clear();
+    }
+
     public void handleWorldTick(World world) {
         if (!shouldProcessTick()) {
+            removeGhostBlocks();
             return;
         }
         blockPlacementPending = false;
@@ -56,10 +64,7 @@ public class BlockPlacementService {
         BlockState ghostBlockState = worldManager.getGhostBlockState(placedBlockPos);
 
         // Remove any ghost blocks that were replaced
-        for (BlockPos pos : ghostBlocksToRemove) {
-            worldManager.clearBlockState(pos);
-        }
-        ghostBlocksToRemove.clear();
+        removeGhostBlocks();
 
         if (ghostBlockState == null) {
             requestNewSuggestions(world);
