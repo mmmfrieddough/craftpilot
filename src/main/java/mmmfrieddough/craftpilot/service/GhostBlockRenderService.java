@@ -22,6 +22,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.shape.VoxelShape;
 
 public final class GhostBlockRenderService {
+    // Prevent instantiation
     private GhostBlockRenderService() {
     }
 
@@ -66,7 +67,6 @@ public final class GhostBlockRenderService {
         }
 
         immediate.draw();
-
     }
 
     /**

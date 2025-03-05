@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.config.ModConfig;
+import mmmfrieddough.craftpilot.service.CraftPilotService;
 import mmmfrieddough.craftpilot.service.GhostBlockService;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.client.MinecraftClient;
@@ -31,11 +32,13 @@ public class MinecraftClientMixin {
 
     private ModConfig config;
     private IWorldManager worldManager;
+    private CraftPilotService craftPilotService;
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(CallbackInfo ci) {
         config = CraftPilot.getInstance().getConfig();
         worldManager = CraftPilot.getInstance().getWorldManager();
+        craftPilotService = CraftPilot.getInstance().getCraftPilotService();
     }
 
     @Inject(method = "doItemPick", at = @At("HEAD"), cancellable = true)
@@ -59,6 +62,7 @@ public class MinecraftClientMixin {
         ClientPlayerEntity player = instance.player;
 
         if (GhostBlockService.handleGhostBlockBreak(worldManager, player)) {
+            craftPilotService.cancelSuggestions();
             cir.setReturnValue(true);
         }
     }
