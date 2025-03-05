@@ -31,30 +31,50 @@ public class CraftPilotService {
         this.config = config;
     }
 
+    /**
+     * Called when any block is placed in the world.
+     * This method marks ghost blocks for removal when they are replaced by real
+     * blocks,
+     * ensuring that ghost blocks don't remain visible after a block has been placed
+     * at the same position.
+     * 
+     * @param pos The position where the block was placed
+     */
     public void onBlockPlaced(BlockPos pos) {
         this.ghostBlocksToRemove.add(pos);
     }
 
+    /**
+     * Called when a player places a block in the world.
+     * This method sets the position of the placed block and marks that a block
+     * placement is pending.
+     * 
+     * @param pos The position where the block was placed
+     */
     public void onPlayerBlockPlaced(BlockPos pos) {
         this.placedBlockPos = pos;
         this.blockPlacementPending = true;
     }
 
-    private void removeGhostBlocks() {
-        for (BlockPos pos : ghostBlocksToRemove) {
-            worldManager.clearBlockState(pos);
-        }
-        ghostBlocksToRemove.clear();
-    }
-
-    public void handleWorldTick(World world) {
-        if (!shouldProcessTick()) {
+    /**
+     * Processes pending block placements.
+     * This method processes pending block placements by checking if the block is
+     * replacing a ghost block or if it is placed in an empty space.
+     * If the block is replacing a ghost block, the block states are processed
+     * immediately.
+     * If the block is placed in an empty space, new suggestions are requested from
+     * the model.
+     * 
+     * @param world The world to process block placements in
+     */
+    public void processPendingBlockPlacements(World world) {
+        if (!shouldProcessPlacement()) {
             removeGhostBlocks();
             return;
         }
         blockPlacementPending = false;
 
-        // Always stop the current request when user places a block
+        // Always stop the current request when there is a change to process
         modelConnector.stop();
 
         // Check if the block is replacing a ghost block
@@ -64,14 +84,74 @@ public class CraftPilotService {
         removeGhostBlocks();
 
         if (ghostBlockState == null) {
-            requestNewSuggestions(world, placedBlockPos);
+            // Request new suggestions if the block is placed in an empty space
+            requestSuggestions(world, placedBlockPos);
         } else {
+            // Process the block placement if the block is replacing a ghost block
             BlockState blockState = world.getBlockState(placedBlockPos);
             processBlockPlacement(world, ghostBlockState, blockState);
         }
     }
 
-    private boolean shouldProcessTick() {
+    /**
+     * Requests suggestions from the model for the given world and position.
+     * This method sends a request to the model connector with the block matrix
+     * around the given position.
+     * 
+     * @param world The world to request suggestions for
+     * @param pos   The position to request suggestions around
+     */
+    public void requestSuggestions(World world, BlockPos pos) {
+        final int offset = config.general.suggestionRange;
+        final int size = offset * 2 + 1;
+        BlockPos startPos = pos.add(-offset, -offset, -offset);
+        String[][][] matrix = getBlocksMatrix(world, startPos, size);
+        modelConnector.sendRequest(config.model, matrix, startPos);
+        resetCounters();
+    }
+
+    /**
+     * Process responses from the model connector.
+     * This method processes all responses from the model connector and sets the
+     * block states in the world manager.
+     */
+    public void processResponses() {
+        ResponseItem item;
+        while ((item = modelConnector.getNextResponse()) != null) {
+            try {
+                processResponse(item);
+            } catch (Exception e) {
+                CraftPilot.LOGGER.error("Failed to process response: {}", e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Cancels the current suggestions request.
+     * This method stops the model connector from processing the current request.
+     */
+    public void cancelSuggestions() {
+        modelConnector.stop();
+    }
+
+    /**
+     * Clears all block states.
+     * This method clears all block states in the world manager and cancels any
+     * pending suggestions requests.
+     */
+    public void clearAll() {
+        cancelSuggestions();
+        worldManager.clearBlockStates();
+    }
+
+    private void removeGhostBlocks() {
+        for (BlockPos pos : ghostBlocksToRemove) {
+            worldManager.clearBlockState(pos);
+        }
+        ghostBlocksToRemove.clear();
+    }
+
+    private boolean shouldProcessPlacement() {
         return blockPlacementPending && placedBlockPos != null;
     }
 
@@ -84,8 +164,7 @@ public class CraftPilotService {
         }
 
         if (placedBlockCount >= config.general.placedBlocksThreshold) {
-            requestNewSuggestions(world, placedBlockPos);
-            resetCounters();
+            requestSuggestions(world, placedBlockPos);
         }
     }
 
@@ -95,9 +174,8 @@ public class CraftPilotService {
         // Clear all suggestions if too many non-matching blocks
         if (nonMatchingBlockCount >= config.general.nonMatchingBlocksThreshold) {
             worldManager.clearBlockStates();
-            resetCounters();
             // Request new suggestions after clearing all
-            requestNewSuggestions(world, placedBlockPos);
+            requestSuggestions(world, placedBlockPos);
             return;
         }
     }
@@ -105,14 +183,6 @@ public class CraftPilotService {
     private void resetCounters() {
         placedBlockCount = 0;
         nonMatchingBlockCount = 0;
-    }
-
-    public void requestNewSuggestions(World world, BlockPos pos) {
-        final int offset = config.general.suggestionRange;
-        final int size = offset * 2 + 1;
-        BlockPos startPos = pos.add(-offset, -offset, -offset);
-        String[][][] matrix = getBlocksMatrix(world, startPos, size);
-        modelConnector.sendRequest(config.model, matrix, startPos);
     }
 
     private String[][][] getBlocksMatrix(World world, BlockPos startPos, int size) {
@@ -129,17 +199,6 @@ public class CraftPilotService {
         return matrix;
     }
 
-    public void processResponses() {
-        ResponseItem item;
-        while ((item = modelConnector.getNextResponse()) != null) {
-            try {
-                processResponse(item);
-            } catch (Exception e) {
-                CraftPilot.LOGGER.error("Failed to process response: {}", e.getMessage());
-            }
-        }
-    }
-
     private void processResponse(ResponseItem item) {
         BlockState blockState = BlockStateHelper.parseBlockState(item.getBlockState());
         if (blockState.isAir()) {
@@ -147,14 +206,5 @@ public class CraftPilotService {
         }
         BlockPos pos = new BlockPos(item.getX(), item.getY(), item.getZ());
         worldManager.setBlockState(pos, blockState);
-    }
-
-    public void cancelCurrentRequest() {
-        modelConnector.stop();
-    }
-
-    public void clearAll() {
-        modelConnector.stop();
-        worldManager.clearBlockStates();
     }
 }

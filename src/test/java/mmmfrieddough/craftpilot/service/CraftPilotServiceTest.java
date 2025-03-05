@@ -14,8 +14,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import mmmfrieddough.craftpilot.config.ModConfig;
-import mmmfrieddough.craftpilot.model.HttpModelConnector;
+import mmmfrieddough.craftpilot.model.IModelConnector;
 import mmmfrieddough.craftpilot.model.ResponseItem;
+import mmmfrieddough.craftpilot.world.BlockStateHelper;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.Bootstrap;
 import net.minecraft.SharedConstants;
@@ -25,10 +26,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 @ExtendWith(MockitoExtension.class)
-class BlockPlacementServiceTest {
-
+class CraftPilotServiceTest {
     @Mock
-    private HttpModelConnector httpService;
+    private IModelConnector modelConnector;
 
     @Mock
     private IWorldManager worldManager;
@@ -56,73 +56,72 @@ class BlockPlacementServiceTest {
         general.nonMatchingBlocksThreshold = 3;
         config.general = general;
 
-        service = new CraftPilotService(httpService, worldManager, config);
+        service = new CraftPilotService(modelConnector, worldManager, config);
         testPos = new BlockPos(0, 0, 0);
         stoneState = Blocks.STONE.getDefaultState();
     }
 
     @Test
-    void handleWorldTick_NoBlockPlaced_DoesNothing() {
-        service.handleWorldTick(world);
+    void processPendingBlockPlacements_NoBlockPlaced_DoesNothing() {
+        service.processPendingBlockPlacements(world);
 
         verify(worldManager, never()).getGhostBlockState(any());
-        verify(httpService, never()).sendRequest(any(), any(), any());
+        verify(modelConnector, never()).sendRequest(any(), any(), any());
     }
 
     @Test
-    void handleWorldTick_BlockPlacedNoGhost_RequestsNewSuggestions() {
+    void processPendingBlockPlacements_BlockPlaced_StopsRequest() {
         service.onPlayerBlockPlaced(testPos);
         when(worldManager.getGhostBlockState(testPos)).thenReturn(null);
         when(worldManager.getBlockState(eq(world), any(BlockPos.class))).thenReturn(stoneState);
 
-        service.handleWorldTick(world);
+        service.processPendingBlockPlacements(world);
 
-        verify(httpService).sendRequest(eq(config.model), any(), any());
+        verify(modelConnector).stop();
     }
 
     @Test
-    void handleWorldTick_BlockMatchesGhost_ClearsGhostBlock() {
+    void processPendingBlockPlacements_BlockPlacedNoGhost_RequestsNewSuggestions() {
+        service.onPlayerBlockPlaced(testPos);
+        when(worldManager.getGhostBlockState(testPos)).thenReturn(null);
+        when(worldManager.getBlockState(eq(world), any(BlockPos.class))).thenReturn(stoneState);
+
+        service.processPendingBlockPlacements(world);
+
+        verify(modelConnector).sendRequest(eq(config.model), any(), any());
+    }
+
+    @Test
+    void processPendingBlockPlacements_BlockMatchesGhost_ClearsGhostBlock() {
         service.onBlockPlaced(testPos);
 
-        service.handleWorldTick(world);
+        service.processPendingBlockPlacements(world);
 
         verify(worldManager).clearBlockState(testPos);
-    }
-
-    @Test
-    void handleWorldTick_BlockMismatchesGhost_StopsHttpService() {
-        service.onPlayerBlockPlaced(testPos);
-        when(worldManager.getGhostBlockState(testPos)).thenReturn(stoneState);
-        when(world.getBlockState(testPos)).thenReturn(Blocks.DIRT.getDefaultState());
-
-        service.handleWorldTick(world);
-
-        verify(httpService).stop();
     }
 
     @Test
     void processResponses_ValidResponse_SetsBlockState() {
         ResponseItem response = new ResponseItem("minecraft:stone", 5, 5, 5);
 
-        when(httpService.getNextResponse()).thenReturn(response).thenReturn(null);
+        when(modelConnector.getNextResponse()).thenReturn(response).thenReturn(null);
         service.onPlayerBlockPlaced(testPos);
 
         service.processResponses();
 
-        verify(worldManager).setBlockState(any(BlockPos.class),
-                any(BlockState.class));
+        verify(worldManager).setBlockState(any(BlockPos.class), any(BlockState.class));
     }
 
     @Test
-    void clearAll_ClearsAllStatesAndStopsHttp() {
+    void clearAll_ClearsAllStatesAndStopsRequest() {
         service.clearAll();
 
-        verify(httpService).stop();
+        verify(modelConnector).stop();
         verify(worldManager).clearBlockStates();
     }
 
     @Test
-    void handleWorldTick_ExceedsThreshold_RequestsNewSuggestions() {
+    void processPendingBlockPlacements_ExceedsThreshold_RequestsNewSuggestions() {
         service.onPlayerBlockPlaced(testPos);
         when(worldManager.getGhostBlockState(testPos)).thenReturn(stoneState);
         when(world.getBlockState(testPos)).thenReturn(stoneState);
@@ -130,15 +129,15 @@ class BlockPlacementServiceTest {
 
         // Simulate placing blocks up to threshold
         for (int i = 0; i < config.general.placedBlocksThreshold; i++) {
-            service.handleWorldTick(world);
+            service.processPendingBlockPlacements(world);
             service.onPlayerBlockPlaced(testPos);
         }
 
-        verify(httpService).sendRequest(eq(config.model), any(), any());
+        verify(modelConnector).sendRequest(eq(config.model), any(), any());
     }
 
     @Test
-    void handleWorldTick_ExceedsNonMatchingThreshold_ClearsAllAndRequests() {
+    void processPendingBlockPlacements_ExceedsNonMatchingThreshold_ClearsAllAndRequests() {
         service.onPlayerBlockPlaced(testPos);
         when(worldManager.getGhostBlockState(testPos)).thenReturn(stoneState);
         when(world.getBlockState(testPos)).thenReturn(Blocks.DIRT.getDefaultState());
@@ -146,11 +145,28 @@ class BlockPlacementServiceTest {
 
         // Simulate non-matching blocks up to threshold
         for (int i = 0; i < config.general.nonMatchingBlocksThreshold; i++) {
-            service.handleWorldTick(world);
+            service.processPendingBlockPlacements(world);
             service.onPlayerBlockPlaced(testPos);
         }
 
         verify(worldManager).clearBlockStates();
-        verify(httpService).sendRequest(eq(config.model), any(), any());
+        verify(modelConnector).sendRequest(eq(config.model), any(), any());
+    }
+
+    @Test
+    void processResponses_ExceptionThrown_ContinuesProcessing() {
+        ResponseItem badResponse = new ResponseItem("invalid:format", 1, 1, 1);
+        ResponseItem goodResponse = new ResponseItem("minecraft:stone", 2, 2, 2);
+
+        when(modelConnector.getNextResponse())
+                .thenReturn(badResponse)
+                .thenReturn(goodResponse)
+                .thenReturn(null);
+
+        service.processResponses();
+
+        // Verify that despite the exception, processing continued and the good response
+        // was handled
+        verify(worldManager).setBlockState(eq(new BlockPos(2, 2, 2)), any(BlockState.class));
     }
 }

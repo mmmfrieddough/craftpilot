@@ -54,22 +54,26 @@ public class CraftPilot implements ModInitializer {
 	}
 
 	private void registerCallbacks() {
-		ClientTickEvents.END_WORLD_TICK.register(craftPilotService::handleWorldTick);
+		ClientTickEvents.END_WORLD_TICK.register(this::handleWorldTick);
 		ClientTickEvents.END_CLIENT_TICK.register(this::handleClientTick);
 		ClientWorldEvents.AFTER_CLIENT_WORLD_CHANGE.register(this::handleWorldChange);
+	}
+
+	private void handleWorldTick(ClientWorld world) {
+		craftPilotService.processPendingBlockPlacements(world);
 	}
 
 	private void handleClientTick(MinecraftClient client) {
 		craftPilotService.processResponses();
 
-		while (KeyBindings.getClearKeyBinding().wasPressed()) {
+		if (KeyBindings.getClearKeyBinding().wasPressed()) {
 			LOGGER.info("Clearing suggestions");
 			craftPilotService.clearAll();
 		}
 
-		while (KeyBindings.getTriggerKeyBinding().wasPressed()) {
+		if (KeyBindings.getTriggerKeyBinding().wasPressed()) {
 			LOGGER.info("Triggering suggestions");
-			craftPilotService.requestNewSuggestions(client.world, null);
+			craftPilotService.requestSuggestions(client.world, null);
 		}
 	}
 
