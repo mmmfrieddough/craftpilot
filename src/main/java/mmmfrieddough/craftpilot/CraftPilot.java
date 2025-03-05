@@ -14,8 +14,10 @@ import mmmfrieddough.craftpilot.world.IWorldManager;
 import mmmfrieddough.craftpilot.world.WorldManager;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.world.ClientWorld;
 
 public class CraftPilot implements ModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger(Reference.MOD_ID);
@@ -49,6 +51,7 @@ public class CraftPilot implements ModInitializer {
 	private void registerCallbacks() {
 		ClientTickEvents.END_WORLD_TICK.register(blockPlacementService::handleWorldTick);
 		ClientTickEvents.END_CLIENT_TICK.register(this::handleClientTick);
+		ClientWorldEvents.AFTER_CLIENT_WORLD_CHANGE.register(this::handleWorldChange);
 	}
 
 	private void handleClientTick(MinecraftClient client) {
@@ -58,6 +61,10 @@ public class CraftPilot implements ModInitializer {
 			LOGGER.info("Clearing suggestions");
 			blockPlacementService.clearAll();
 		}
+	}
+
+	private void handleWorldChange(MinecraftClient client, ClientWorld world) {
+		blockPlacementService.clearAll();
 	}
 
 	public static CraftPilot getInstance() {
