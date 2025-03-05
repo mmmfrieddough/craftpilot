@@ -15,9 +15,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public class BlockPlacementService {
-    private static final int MATRIX_SIZE = 11;
-    private static final int MATRIX_OFFSET = MATRIX_SIZE / 2;
-
     private final HttpService httpService;
     private final IWorldManager worldManager;
     private final ModConfig config;
@@ -111,19 +108,19 @@ public class BlockPlacementService {
     }
 
     private void requestNewSuggestions(World world) {
-        String[][][] matrix = getBlocksMatrix(world, placedBlockPos);
-        httpService.sendRequest(config.model, matrix, placedBlockPos);
+        final int offset = config.general.suggestionRange;
+        final int size = offset * 2 + 1;
+        BlockPos startPos = placedBlockPos.add(-offset, -offset, -offset);
+        String[][][] matrix = getBlocksMatrix(world, startPos, size);
+        httpService.sendRequest(config.model, matrix, startPos);
     }
 
-    private String[][][] getBlocksMatrix(World world, BlockPos centerPos) {
-        String[][][] matrix = new String[MATRIX_SIZE][MATRIX_SIZE][MATRIX_SIZE];
-        for (int x = 0; x < MATRIX_SIZE; x++) {
-            for (int y = 0; y < MATRIX_SIZE; y++) {
-                for (int z = 0; z < MATRIX_SIZE; z++) {
-                    BlockPos pos = centerPos.add(
-                            x - MATRIX_OFFSET,
-                            y - MATRIX_OFFSET,
-                            z - MATRIX_OFFSET);
+    private String[][][] getBlocksMatrix(World world, BlockPos startPos, int size) {
+        String[][][] matrix = new String[size][size][size];
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                for (int z = 0; z < size; z++) {
+                    BlockPos pos = startPos.add(x, y, z);
                     BlockState state = worldManager.getBlockState(world, pos);
                     matrix[z][y][x] = BlockMatrixUtils.getBlockStateString(state);
                 }

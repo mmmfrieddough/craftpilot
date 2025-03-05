@@ -26,9 +26,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.ClickEvent;
 
 public class HttpService {
-    private static final int MATRIX_SIZE = 11;
-    private static final int MATRIX_OFFSET = MATRIX_SIZE / 2;
-
     private static final Logger LOGGER = CraftPilot.LOGGER;
 
     private final HttpClient httpClient;
@@ -112,10 +109,7 @@ public class HttpService {
     }
 
     private BlockPos calculateResponsePosition(ResponseItem item, BlockPos placedBlockPos) {
-        return placedBlockPos.add(
-                item.getX() - MATRIX_OFFSET,
-                item.getY() - MATRIX_OFFSET,
-                item.getZ() - MATRIX_OFFSET);
+        return placedBlockPos.add(item.getX(), item.getY(), item.getZ());
     }
 
     private void handleResponse(HttpResponse<InputStream> response, long requestId, BlockPos origin) {

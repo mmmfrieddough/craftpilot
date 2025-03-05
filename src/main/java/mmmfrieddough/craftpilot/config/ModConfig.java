@@ -2,8 +2,10 @@ package mmmfrieddough.craftpilot.config;
 
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
+import me.shedaniel.autoconfig.annotation.ConfigEntry.BoundedDiscrete;
 import me.shedaniel.autoconfig.annotation.ConfigEntry.Category;
 import me.shedaniel.autoconfig.annotation.ConfigEntry.ColorPicker;
+import me.shedaniel.autoconfig.annotation.ConfigEntry.Gui.Excluded;
 import me.shedaniel.autoconfig.annotation.ConfigEntry.Gui.Tooltip;
 import me.shedaniel.autoconfig.annotation.ConfigEntry.Gui.TransitiveObject;
 
@@ -16,6 +18,10 @@ public class ModConfig implements ConfigData {
     public static class General {
         @Tooltip
         public boolean enable = true;
+        @Tooltip
+        @BoundedDiscrete(min = 3, max = 7)
+        @Excluded
+        public int suggestionRange = 5;
         @Tooltip
         public int nonMatchingBlocksThreshold = 3;
         @Tooltip

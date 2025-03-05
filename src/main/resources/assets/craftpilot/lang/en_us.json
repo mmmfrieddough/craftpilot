@@ -5,6 +5,8 @@
     "text.autoconfig.craftpilot.category.General": "General",
     "text.autoconfig.craftpilot.option.general.enable": "Enable",
     "text.autoconfig.craftpilot.option.general.enable.@Tooltip": "Enable the suggestions",
+    "text.autoconfig.craftpilot.option.general.suggestionRange": "Suggestion Range",
+    "text.autoconfig.craftpilot.option.general.suggestionRange.@Tooltip": "The range for the area the suggestions are generated in",
     "text.autoconfig.craftpilot.option.general.nonMatchingBlocksThreshold": "Non Matching Block Threshold",
     "text.autoconfig.craftpilot.option.general.nonMatchingBlocksThreshold.@Tooltip": "The amount of blocks not matching the suggestion the user can place before it is cleared",
     "text.autoconfig.craftpilot.option.general.placedBlocksThreshold": "Placed Blocks Threshold",
