@@ -5,8 +5,8 @@ import java.util.Set;
 
 import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.config.ModConfig;
-import mmmfrieddough.craftpilot.http.HttpService;
-import mmmfrieddough.craftpilot.http.ResponseItem;
+import mmmfrieddough.craftpilot.model.IModelConnector;
+import mmmfrieddough.craftpilot.model.ResponseItem;
 import mmmfrieddough.craftpilot.util.BlockMatrixUtils;
 import mmmfrieddough.craftpilot.world.BlockStateHelper;
 import mmmfrieddough.craftpilot.world.IWorldManager;
@@ -14,8 +14,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class BlockPlacementService {
-    private final HttpService httpService;
+public class CraftPilotService {
+    private final IModelConnector modelConnector;
     private final IWorldManager worldManager;
     private final ModConfig config;
 
@@ -25,8 +25,8 @@ public class BlockPlacementService {
     private int placedBlockCount = 0;
     private Set<BlockPos> ghostBlocksToRemove = new HashSet<>();
 
-    public BlockPlacementService(HttpService httpService, IWorldManager worldManager, ModConfig config) {
-        this.httpService = httpService;
+    public CraftPilotService(IModelConnector modelConnector, IWorldManager worldManager, ModConfig config) {
+        this.modelConnector = modelConnector;
         this.worldManager = worldManager;
         this.config = config;
     }
@@ -55,7 +55,7 @@ public class BlockPlacementService {
         blockPlacementPending = false;
 
         // Always stop the current request when user places a block
-        httpService.stop();
+        modelConnector.stop();
 
         // Check if the block is replacing a ghost block
         BlockState ghostBlockState = worldManager.getGhostBlockState(placedBlockPos);
@@ -64,7 +64,7 @@ public class BlockPlacementService {
         removeGhostBlocks();
 
         if (ghostBlockState == null) {
-            requestNewSuggestions(world);
+            requestNewSuggestions(world, placedBlockPos);
         } else {
             BlockState blockState = world.getBlockState(placedBlockPos);
             processBlockPlacement(world, ghostBlockState, blockState);
@@ -84,7 +84,7 @@ public class BlockPlacementService {
         }
 
         if (placedBlockCount >= config.general.placedBlocksThreshold) {
-            requestNewSuggestions(world);
+            requestNewSuggestions(world, placedBlockPos);
             resetCounters();
         }
     }
@@ -97,7 +97,7 @@ public class BlockPlacementService {
             worldManager.clearBlockStates();
             resetCounters();
             // Request new suggestions after clearing all
-            requestNewSuggestions(world);
+            requestNewSuggestions(world, placedBlockPos);
             return;
         }
     }
@@ -107,12 +107,12 @@ public class BlockPlacementService {
         nonMatchingBlockCount = 0;
     }
 
-    private void requestNewSuggestions(World world) {
+    public void requestNewSuggestions(World world, BlockPos pos) {
         final int offset = config.general.suggestionRange;
         final int size = offset * 2 + 1;
-        BlockPos startPos = placedBlockPos.add(-offset, -offset, -offset);
+        BlockPos startPos = pos.add(-offset, -offset, -offset);
         String[][][] matrix = getBlocksMatrix(world, startPos, size);
-        httpService.sendRequest(config.model, matrix, startPos);
+        modelConnector.sendRequest(config.model, matrix, startPos);
     }
 
     private String[][][] getBlocksMatrix(World world, BlockPos startPos, int size) {
@@ -131,7 +131,7 @@ public class BlockPlacementService {
 
     public void processResponses() {
         ResponseItem item;
-        while ((item = httpService.getNextResponse()) != null) {
+        while ((item = modelConnector.getNextResponse()) != null) {
             try {
                 processResponse(item);
             } catch (Exception e) {
@@ -150,11 +150,11 @@ public class BlockPlacementService {
     }
 
     public void cancelCurrentRequest() {
-        httpService.stop();
+        modelConnector.stop();
     }
 
     public void clearAll() {
-        httpService.stop();
+        modelConnector.stop();
         worldManager.clearBlockStates();
     }
 }

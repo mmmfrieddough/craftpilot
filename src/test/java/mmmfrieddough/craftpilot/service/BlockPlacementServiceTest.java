@@ -14,8 +14,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import mmmfrieddough.craftpilot.config.ModConfig;
-import mmmfrieddough.craftpilot.http.HttpService;
-import mmmfrieddough.craftpilot.http.ResponseItem;
+import mmmfrieddough.craftpilot.model.HttpModelConnector;
+import mmmfrieddough.craftpilot.model.ResponseItem;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.Bootstrap;
 import net.minecraft.SharedConstants;
@@ -28,7 +28,7 @@ import net.minecraft.world.World;
 class BlockPlacementServiceTest {
 
     @Mock
-    private HttpService httpService;
+    private HttpModelConnector httpService;
 
     @Mock
     private IWorldManager worldManager;
@@ -39,7 +39,7 @@ class BlockPlacementServiceTest {
     @Mock
     private World world;
 
-    private BlockPlacementService service;
+    private CraftPilotService service;
     private BlockPos testPos;
     private BlockState stoneState;
 
@@ -56,7 +56,7 @@ class BlockPlacementServiceTest {
         general.nonMatchingBlocksThreshold = 3;
         config.general = general;
 
-        service = new BlockPlacementService(httpService, worldManager, config);
+        service = new CraftPilotService(httpService, worldManager, config);
         testPos = new BlockPos(0, 0, 0);
         stoneState = Blocks.STONE.getDefaultState();
     }

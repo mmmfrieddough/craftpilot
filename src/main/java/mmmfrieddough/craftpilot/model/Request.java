@@ -1,4 +1,4 @@
-package mmmfrieddough.craftpilot.http;
+package mmmfrieddough.craftpilot.model;
 
 public class Request {
     private String platform;

@@ -83,7 +83,7 @@ public final class GhostBlockService {
 
         worldManager.clearBlockState(target.pos());
         player.swingHand(Hand.MAIN_HAND);
-        CraftPilot.getBlockPlacementService().cancelCurrentRequest();
+        CraftPilot.getInstance().getCraftPilotService().cancelCurrentRequest();
         return true;
     }
 

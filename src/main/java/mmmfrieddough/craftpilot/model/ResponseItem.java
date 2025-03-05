@@ -1,4 +1,4 @@
-package mmmfrieddough.craftpilot.http;
+package mmmfrieddough.craftpilot.model;
 
 public class ResponseItem {
     private String block_state;
