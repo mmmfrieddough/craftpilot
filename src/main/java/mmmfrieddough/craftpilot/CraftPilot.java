@@ -10,6 +10,8 @@ import mmmfrieddough.craftpilot.model.HttpModelConnector;
 import mmmfrieddough.craftpilot.model.IModelConnector;
 import mmmfrieddough.craftpilot.network.NetworkManager;
 import mmmfrieddough.craftpilot.service.CraftPilotService;
+import mmmfrieddough.craftpilot.service.GhostBlockService;
+import mmmfrieddough.craftpilot.service.GhostBlockService.GhostBlockTarget;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import mmmfrieddough.craftpilot.world.WorldManager;
 import net.fabricmc.api.ModInitializer;
@@ -17,6 +19,8 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.math.BlockPos;
 
 public class CraftPilot implements ModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger(Reference.MOD_ID);
@@ -72,9 +76,29 @@ public class CraftPilot implements ModInitializer {
 		}
 
 		if (KeyBindings.getTriggerKeyBinding().wasPressed()) {
-			LOGGER.info("Triggering suggestions");
-			craftPilotService.requestSuggestions(client.world, null);
+			BlockPos pos = getTargetBlockPosition(client);
+			if (pos != null) {
+				LOGGER.info("Triggering suggestions");
+				craftPilotService.cancelSuggestions();
+				craftPilotService.requestSuggestions(client.world, pos);
+			}
 		}
+	}
+
+	private BlockPos getTargetBlockPosition(MinecraftClient client) {
+		// First check for ghost block target
+		GhostBlockTarget target = GhostBlockService.getCurrentTarget();
+		if (target != null) {
+			return target.pos();
+		}
+
+		// Fall back to regular crosshair target
+		BlockHitResult hitResult = (BlockHitResult) client.crosshairTarget;
+		if (hitResult.getType() == BlockHitResult.Type.BLOCK) {
+			return hitResult.getBlockPos();
+		}
+
+		return null;
 	}
 
 	private void handleWorldChange(MinecraftClient client, ClientWorld world) {
