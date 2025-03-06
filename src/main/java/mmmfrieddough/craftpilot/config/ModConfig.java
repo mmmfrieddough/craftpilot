@@ -17,7 +17,7 @@ public class ModConfig implements ConfigData {
 
     public static class General {
         @Tooltip
-        public boolean enable = true;
+        public boolean enableAutoTrigger = true;
         @Tooltip
         @BoundedDiscrete(min = 3, max = 7)
         @Excluded

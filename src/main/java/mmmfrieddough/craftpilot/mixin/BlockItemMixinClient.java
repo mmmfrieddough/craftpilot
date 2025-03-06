@@ -26,9 +26,9 @@ public class BlockItemMixinClient {
             return;
         }
 
-        // Check if the mod is enabled
+        // Check if auto trigger is enabled
         ModConfig config = CraftPilot.getInstance().getConfig();
-        if (!config.general.enable) {
+        if (!config.general.enableAutoTrigger) {
             return;
         }
 

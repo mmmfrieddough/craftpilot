@@ -7,10 +7,13 @@ import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import mmmfrieddough.craftpilot.model.IModelConnector;
 import mmmfrieddough.craftpilot.model.ResponseItem;
+import mmmfrieddough.craftpilot.service.GhostBlockService.GhostBlockTarget;
 import mmmfrieddough.craftpilot.util.BlockMatrixUtils;
 import mmmfrieddough.craftpilot.world.BlockStateHelper;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -94,20 +97,20 @@ public class CraftPilotService {
     }
 
     /**
-     * Requests suggestions from the model for the given world and position.
-     * This method sends a request to the model connector with the block matrix
-     * around the given position.
+     * Triggers suggestions for the block at the crosshair target.
+     * This method triggers suggestions for the block at the crosshair target by
+     * requesting suggestions from the model connector.
+     * If the crosshair target is a ghost block, the suggestions are requested for
+     * the ghost block position.
      * 
-     * @param world The world to request suggestions for
-     * @param pos   The position to request suggestions around
+     * @param client The Minecraft client
      */
-    public void requestSuggestions(World world, BlockPos pos) {
-        final int offset = config.general.suggestionRange;
-        final int size = offset * 2 + 1;
-        BlockPos startPos = pos.add(-offset, -offset, -offset);
-        String[][][] matrix = getBlocksMatrix(world, startPos, size);
-        modelConnector.sendRequest(config.model, matrix, startPos);
-        resetCounters();
+    public void triggerSuggestions(MinecraftClient client) {
+        BlockPos pos = getTargetBlockPosition(client);
+        if (pos != null) {
+            cancelSuggestions();
+            requestSuggestions(client.world, pos);
+        }
     }
 
     /**
@@ -142,6 +145,39 @@ public class CraftPilotService {
     public void clearAll() {
         cancelSuggestions();
         worldManager.clearBlockStates();
+    }
+
+    /**
+     * Requests suggestions from the model for the given world and position.
+     * This method sends a request to the model connector with the block matrix
+     * around the given position.
+     * 
+     * @param world The world to request suggestions for
+     * @param pos   The position to request suggestions around
+     */
+    private void requestSuggestions(World world, BlockPos pos) {
+        final int offset = config.general.suggestionRange;
+        final int size = offset * 2 + 1;
+        BlockPos startPos = pos.add(-offset, -offset, -offset);
+        String[][][] matrix = getBlocksMatrix(world, startPos, size);
+        modelConnector.sendRequest(config.model, matrix, startPos);
+        resetCounters();
+    }
+
+    private BlockPos getTargetBlockPosition(MinecraftClient client) {
+        // First check for ghost block target
+        GhostBlockTarget target = GhostBlockService.getCurrentTarget();
+        if (target != null) {
+            return target.pos();
+        }
+
+        // Fall back to regular crosshair target
+        BlockHitResult hitResult = (BlockHitResult) client.crosshairTarget;
+        if (hitResult.getType() == BlockHitResult.Type.BLOCK) {
+            return hitResult.getBlockPos();
+        }
+
+        return null;
     }
 
     private void removeGhostBlocks() {

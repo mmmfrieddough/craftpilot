@@ -73,7 +73,7 @@ public class CraftPilot implements ModInitializer {
 
 		if (KeyBindings.getTriggerKeyBinding().wasPressed()) {
 			LOGGER.info("Triggering suggestions");
-			craftPilotService.requestSuggestions(client.world, null);
+			craftPilotService.triggerSuggestions(client);
 		}
 	}
 
