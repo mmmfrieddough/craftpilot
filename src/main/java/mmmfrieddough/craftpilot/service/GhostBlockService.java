@@ -239,16 +239,16 @@ public final class GhostBlockService {
             HitResult vanillaTarget) {
         Vec3d cameraPos = camera.getPos();
         Vec3d rotationVec = camera.getFocusedEntity().getRotationVec(1.0f);
+        Map<BlockPos, BlockState> ghostBlocks = worldManager.getGhostBlocks();
 
         // Find nearest ghost block using ray casting
-        BlockPos targetPos = findTargetedGhostBlock(worldManager.getGhostBlocks(), cameraPos, rotationVec, reach,
-                vanillaTarget);
+        BlockPos targetPos = findTargetedGhostBlock(ghostBlocks, cameraPos, rotationVec, reach, vanillaTarget);
 
         if (targetPos == null) {
             return null;
         }
 
-        BlockState ghostState = worldManager.getGhostBlocks().get(targetPos);
+        BlockState ghostState = ghostBlocks.get(targetPos);
         return new GhostBlockTarget(targetPos, ghostState);
     }
 
