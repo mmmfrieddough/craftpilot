@@ -9,4 +9,6 @@ public interface IModelConnector {
     public ResponseItem getNextResponse();
 
     public void stop();
+
+    public boolean isGenerating();
 }
