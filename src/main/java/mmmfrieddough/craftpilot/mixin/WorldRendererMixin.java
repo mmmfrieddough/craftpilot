@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -32,17 +33,27 @@ import net.minecraft.util.profiler.Profilers;
 
 @Mixin(WorldRenderer.class)
 public class WorldRendererMixin {
+    @Shadow
+    private MinecraftClient client;
+
+    private ModConfig config;
+    private IWorldManager worldManager;
+
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void onInit(CallbackInfo ci) {
+        config = CraftPilot.getInstance().getConfig();
+        worldManager = CraftPilot.getInstance().getWorldManager();
+    }
+
     @Inject(method = "render", at = @At("HEAD"))
     private void onRenderStart(ObjectAllocator objectAllocator, RenderTickCounter renderTickCounter,
             boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, Matrix4f positionMatrix,
             Matrix4f projectionMatrix, CallbackInfo ci) {
         Profilers.get().push("craftpilot_update_targetted_block");
 
-        MinecraftClient client = MinecraftClient.getInstance();
         if (client.player != null) {
             double reach = client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
-            IWorldManager manager = CraftPilot.getInstance().getWorldManager();
-            GhostBlockService.updateCurrentTarget(manager, camera, reach, client.crosshairTarget);
+            GhostBlockService.updateCurrentTarget(worldManager, camera, reach, client.crosshairTarget);
         }
 
         Profilers.get().pop();
@@ -54,8 +65,7 @@ public class WorldRendererMixin {
             Matrix4f positionMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
         Profilers.get().push("craftpilot_render_blocks");
 
-        IWorldManager manager = CraftPilot.getInstance().getWorldManager();
-        Map<BlockPos, BlockState> ghostBlocks = manager.getGhostBlocks();
+        Map<BlockPos, BlockState> ghostBlocks = worldManager.getGhostBlocks();
 
         // Early return if no blocks to render
         if (ghostBlocks.isEmpty()) {
@@ -63,8 +73,6 @@ public class WorldRendererMixin {
             return;
         }
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        ModConfig config = CraftPilot.getConfig();
         int renderDistance = config.rendering.renderDistance;
 
         // Create vertex consumer once
@@ -82,7 +90,8 @@ public class WorldRendererMixin {
         GhostBlockRenderService.renderGhostBlocks(client, ghostBlocks, camera, renderDistance,
                 config.rendering.blockPlacementOpacity, matrices, immediate);
 
-        GhostBlockRenderService.renderBlockOutlines(client, ghostBlocks, camera, renderDistance, config.rendering,
+        GhostBlockRenderService.renderBlockOutlines(client, ghostBlocks, camera, renderDistance,
+                config.rendering,
                 matrices, immediate);
 
         matrices.pop();

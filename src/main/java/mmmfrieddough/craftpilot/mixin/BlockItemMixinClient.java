@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.config.ModConfig;
-import mmmfrieddough.craftpilot.service.BlockPlacementService;
+import mmmfrieddough.craftpilot.service.CraftPilotService;
 import net.minecraft.block.BlockState;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemPlacementContext;
@@ -27,14 +27,14 @@ public class BlockItemMixinClient {
         }
 
         // Check if the mod is enabled
-        ModConfig config = CraftPilot.getConfig();
+        ModConfig config = CraftPilot.getInstance().getConfig();
         if (!config.general.enable) {
             return;
         }
 
         // Check if a block was actually placed
         if (cir.getReturnValue().isAccepted()) {
-            BlockPlacementService blockPlacementService = CraftPilot.getBlockPlacementService();
+            CraftPilotService blockPlacementService = CraftPilot.getInstance().getCraftPilotService();
             blockPlacementService.onPlayerBlockPlaced(blockPos);
         }
     }

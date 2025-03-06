@@ -1,4 +1,4 @@
-package mmmfrieddough.craftpilot.http;
+package mmmfrieddough.craftpilot.model;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -25,7 +25,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.ClickEvent;
 
-public class HttpService {
+public class HttpModelConnector implements IModelConnector {
     private static final Logger LOGGER = CraftPilot.LOGGER;
 
     private final HttpClient httpClient;
@@ -34,7 +34,7 @@ public class HttpService {
     private CompletableFuture<HttpResponse<InputStream>> currentRequestFuture;
     private long currentRequestId = 0;
 
-    public HttpService() {
+    public HttpModelConnector() {
         this.httpClient = HttpClient.newHttpClient();
         this.gson = new Gson();
         this.responseQueue = new ConcurrentLinkedQueue<>();

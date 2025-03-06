@@ -2,17 +2,15 @@ package mmmfrieddough.craftpilot.service;
 
 import java.util.Map;
 
-import net.minecraft.client.MinecraftClient;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
-import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.network.payloads.PlayerPlaceBlockPayload;
 import mmmfrieddough.craftpilot.util.GhostBlockGlobal;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
-import net.minecraft.world.GameMode;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
@@ -27,6 +25,7 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.GameMode;
 
 public final class GhostBlockService {
     public record GhostBlockTarget(BlockPos pos, BlockState state) {
@@ -83,7 +82,6 @@ public final class GhostBlockService {
 
         worldManager.clearBlockState(target.pos());
         player.swingHand(Hand.MAIN_HAND);
-        CraftPilot.getBlockPlacementService().cancelCurrentRequest();
         return true;
     }
 
@@ -241,16 +239,16 @@ public final class GhostBlockService {
             HitResult vanillaTarget) {
         Vec3d cameraPos = camera.getPos();
         Vec3d rotationVec = camera.getFocusedEntity().getRotationVec(1.0f);
+        Map<BlockPos, BlockState> ghostBlocks = worldManager.getGhostBlocks();
 
         // Find nearest ghost block using ray casting
-        BlockPos targetPos = findTargetedGhostBlock(worldManager.getGhostBlocks(), cameraPos, rotationVec, reach,
-                vanillaTarget);
+        BlockPos targetPos = findTargetedGhostBlock(ghostBlocks, cameraPos, rotationVec, reach, vanillaTarget);
 
         if (targetPos == null) {
             return null;
         }
 
-        BlockState ghostState = worldManager.getGhostBlocks().get(targetPos);
+        BlockState ghostState = ghostBlocks.get(targetPos);
         return new GhostBlockTarget(targetPos, ghostState);
     }
 

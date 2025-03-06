@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.config.ModConfig;
+import mmmfrieddough.craftpilot.service.CraftPilotService;
 import mmmfrieddough.craftpilot.service.GhostBlockService;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.client.MinecraftClient;
@@ -29,6 +30,17 @@ public class MinecraftClientMixin {
     @Shadow
     private int itemUseCooldown;
 
+    private ModConfig config;
+    private IWorldManager worldManager;
+    private CraftPilotService craftPilotService;
+
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void onInit(CallbackInfo ci) {
+        config = CraftPilot.getInstance().getConfig();
+        worldManager = CraftPilot.getInstance().getWorldManager();
+        craftPilotService = CraftPilot.getInstance().getCraftPilotService();
+    }
+
     @Inject(method = "doItemPick", at = @At("HEAD"), cancellable = true)
     private void onDoItemPick(CallbackInfo ci) {
         // Extract necessary information
@@ -47,17 +59,16 @@ public class MinecraftClientMixin {
     @Inject(method = "doAttack", at = @At("HEAD"), cancellable = true)
     private void onDoAttack(CallbackInfoReturnable<Boolean> cir) {
         // Extract necessary information
-        IWorldManager worldManager = CraftPilot.getInstance().getWorldManager();
         ClientPlayerEntity player = instance.player;
 
         if (GhostBlockService.handleGhostBlockBreak(worldManager, player)) {
+            craftPilotService.cancelSuggestions();
             cir.setReturnValue(true);
         }
     }
 
     @Inject(method = "doItemUse", at = @At("HEAD"), cancellable = true)
     private void onDoItemUse(CallbackInfo ci) {
-        ModConfig config = CraftPilot.getConfig();
         if (!config.general.enableEasyPlace) {
             return;
         }
