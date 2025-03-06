@@ -10,11 +10,13 @@ import mmmfrieddough.craftpilot.model.HttpModelConnector;
 import mmmfrieddough.craftpilot.model.IModelConnector;
 import mmmfrieddough.craftpilot.network.NetworkManager;
 import mmmfrieddough.craftpilot.service.CraftPilotService;
+import mmmfrieddough.craftpilot.ui.ActivityIndicatorRenderer;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import mmmfrieddough.craftpilot.world.WorldManager;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 
@@ -27,6 +29,7 @@ public class CraftPilot implements ModInitializer {
 	private IWorldManager worldManager;
 	private IModelConnector modelConnector;
 	private CraftPilotService craftPilotService;
+	private ActivityIndicatorRenderer activityIndicator;
 
 	public CraftPilot() {
 		if (instance != null) {
@@ -38,13 +41,21 @@ public class CraftPilot implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		LOGGER.info("Initializing Craftpilot");
+
 		initializeConfig();
 		worldManager = new WorldManager();
 		modelConnector = new HttpModelConnector();
 		craftPilotService = new CraftPilotService(modelConnector, worldManager, config);
+
+		// Initialize and register activity indicator
+		activityIndicator = new ActivityIndicatorRenderer();
+		HudRenderCallback.EVENT.register((drawContext, tickDelta) -> activityIndicator.render(drawContext,
+				MinecraftClient.getInstance(), modelConnector, tickDelta));
+
 		KeyBindings.register();
 		NetworkManager.init();
 		registerCallbacks();
+
 		LOGGER.info("Craftpilot initialized");
 	}
 

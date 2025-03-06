@@ -38,6 +38,8 @@ public class HttpModelConnector implements IModelConnector {
     private CompletableFuture<HttpResponse<InputStream>> currentRequestFuture;
     private long currentRequestId = 0;
 
+    private volatile boolean generating = false;
+
     public HttpModelConnector() {
         this.httpClient = HttpClient.newHttpClient();
         this.gson = new Gson();
@@ -62,6 +64,8 @@ public class HttpModelConnector implements IModelConnector {
                 .build();
 
         currentRequestFuture = httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
+
+        generating = true;
 
         currentRequestFuture
                 .thenAccept(response -> handleResponse(response, requestId, origin))
@@ -104,6 +108,10 @@ public class HttpModelConnector implements IModelConnector {
         return responseQueue.poll();
     }
 
+    public boolean isGenerating() {
+        return generating || !responseQueue.isEmpty();
+    }
+
     private Request buildRequest(String[][][] matrix, ModConfig.Model modelConfig) {
         Request request = new Request();
         request.setPlatform("java");
@@ -132,7 +140,7 @@ public class HttpModelConnector implements IModelConnector {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
             String line;
-            while ((line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null && generating) {
                 // Ignore responses from old requests
                 if (requestId != currentRequestId) {
                     return;
@@ -145,13 +153,16 @@ public class HttpModelConnector implements IModelConnector {
             }
         } catch (Exception e) {
             LOGGER.error("Error handling the streaming response", e);
+        } finally {
+            generating = false;
         }
     }
 
     private void cancelCurrentRequest() {
-        if (currentRequestFuture != null && !currentRequestFuture.isDone()) {
+        if (currentRequestFuture != null) {
             currentRequestFuture.cancel(true);
         }
+        generating = false;
     }
 
     private void clearResponses() {
