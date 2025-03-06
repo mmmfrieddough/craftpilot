@@ -19,11 +19,12 @@ import org.slf4j.Logger;
 import com.google.gson.Gson;
 
 import mmmfrieddough.craftpilot.CraftPilot;
+import mmmfrieddough.craftpilot.Reference;
 import mmmfrieddough.craftpilot.config.ModConfig;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.ClickEvent;
+import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
 
 public class HttpModelConnector implements IModelConnector {
     private static final Logger LOGGER = CraftPilot.LOGGER;
@@ -31,6 +32,9 @@ public class HttpModelConnector implements IModelConnector {
     private final HttpClient httpClient;
     private final Gson gson;
     private final ConcurrentLinkedQueue<ResponseItem> responseQueue;
+    private final String userAgent = "Craftpilot/" + Reference.MOD_VERSION + " (MC " + Reference.MC_VERSION + ")";
+    private final String clientId = java.util.UUID.randomUUID().toString();
+    private final String playerId = MinecraftClient.getInstance().getSession().getUuidOrNull().toString();
     private CompletableFuture<HttpResponse<InputStream>> currentRequestFuture;
     private long currentRequestId = 0;
 
@@ -49,6 +53,11 @@ public class HttpModelConnector implements IModelConnector {
         HttpRequest httpRequest = HttpRequest.newBuilder()
                 .uri(URI.create(config.serverUrl))
                 .header("Content-Type", "application/json")
+                .header("User-Agent", userAgent)
+                .header("X-Minecraft-Version", Reference.MC_VERSION)
+                .header("X-Craftpilot-Version", Reference.MOD_VERSION)
+                .header("X-Client-ID", clientId)
+                .header("X-Player-ID", playerId)
                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                 .build();
 
@@ -98,7 +107,7 @@ public class HttpModelConnector implements IModelConnector {
     private Request buildRequest(String[][][] matrix, ModConfig.Model modelConfig) {
         Request request = new Request();
         request.setPlatform("java");
-        request.setVersion_number(3700);
+        request.setVersion_number(Reference.MC_DATA_VERSION);
         request.setTemperature(modelConfig.temperature);
         request.setStart_radius(modelConfig.startRadius);
         request.setMax_iterations(modelConfig.maxIterations);
