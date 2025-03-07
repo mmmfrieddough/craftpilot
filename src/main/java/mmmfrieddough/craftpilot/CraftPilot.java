@@ -89,7 +89,7 @@ public class CraftPilot implements ModInitializer {
 
 		if (KeyBindings.getAcceptAllKeyBinding().wasPressed()) {
 			LOGGER.info("Accepting all suggestions");
-			// craftPilotService.acceptAllSuggestions();
+			craftPilotService.acceptAll(client);
 		}
 	}
 

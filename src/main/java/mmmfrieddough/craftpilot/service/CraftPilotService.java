@@ -147,6 +147,14 @@ public class CraftPilotService {
         worldManager.clearBlockStates();
     }
 
+    public void acceptAll(MinecraftClient client) {
+        if (!client.interactionManager.getCurrentGameMode().isCreative()) {
+            return;
+        }
+        cancelSuggestions();
+        GhostBlockService.handleGhostBlockPlaceAll(client, worldManager, config.general.acceptAllMaxIterations);
+    }
+
     /**
      * Requests suggestions from the model for the given world and position.
      * This method sends a request to the model connector with the block matrix

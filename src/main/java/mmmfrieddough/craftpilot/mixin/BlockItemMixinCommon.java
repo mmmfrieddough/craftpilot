@@ -26,9 +26,9 @@ public class BlockItemMixinCommon {
     // one from the global state
     @Inject(method = "getPlacementState", at = @At("HEAD"), cancellable = true)
     private void injectGhostState(ItemPlacementContext context, CallbackInfoReturnable<BlockState> cir) {
-        if (GhostBlockGlobal.blockState != null) {
+        BlockState injectedBlockState = GhostBlockGlobal.getBlockState();
+        if (injectedBlockState != null) {
             BlockState originalBlockState = this.block.getPlacementState(context);
-            BlockState injectedBlockState = GhostBlockGlobal.blockState;
             cir.setReturnValue(
                     originalBlockState != null && this.canPlace(context, injectedBlockState) ? injectedBlockState
                             : null);
