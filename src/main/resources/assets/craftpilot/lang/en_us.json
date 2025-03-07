@@ -1,6 +1,8 @@
 {
     "key.categories.craftpilot": "Craftpilot",
     "key.craftpilot.clear": "Clear Suggestions",
+    "key.craftpilot.accept_all": "Accept All Suggestions",
+    "key.craftpilot.trigger": "Trigger Suggestions",
     "text.autoconfig.craftpilot.title": "Craftpilot",
     "text.autoconfig.craftpilot.category.General": "General",
     "text.autoconfig.craftpilot.option.general.enableAutoTrigger": "Enable Auto Trigger",
@@ -13,6 +15,8 @@
     "text.autoconfig.craftpilot.option.general.placedBlocksThreshold.@Tooltip": "The amount of blocks the user has to place before the suggestion is expanded",
     "text.autoconfig.craftpilot.option.general.enableEasyPlace": "Enable Easy Place",
     "text.autoconfig.craftpilot.option.general.enableEasyPlace.@Tooltip": "Allows the user to place blocks by just clicking on them",
+    "text.autoconfig.craftpilot.option.general.acceptAllMaxIterations": "Accept All Max Iterations",
+    "text.autoconfig.craftpilot.option.general.acceptAllMaxIterations.@Tooltip": "The maximum number of iterations the accept all feature can run for when attempting to place blocks",
     "text.autoconfig.craftpilot.category.Model": "Model",
     "text.autoconfig.craftpilot.option.model.serverUrl": "Server URL",
     "text.autoconfig.craftpilot.option.model.serverUrl.@Tooltip": "The URL of the server to make the requests to",

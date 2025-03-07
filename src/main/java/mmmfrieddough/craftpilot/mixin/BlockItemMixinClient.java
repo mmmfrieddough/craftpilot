@@ -34,8 +34,8 @@ public class BlockItemMixinClient {
 
         // Check if a block was actually placed
         if (cir.getReturnValue().isAccepted()) {
-            CraftPilotService blockPlacementService = CraftPilot.getInstance().getCraftPilotService();
-            blockPlacementService.onPlayerBlockPlaced(blockPos);
+            CraftPilotService craftPilotService = CraftPilot.getInstance().getCraftPilotService();
+            craftPilotService.onPlayerBlockPlaced(blockPos);
         }
     }
 }

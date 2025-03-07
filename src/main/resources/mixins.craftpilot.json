@@ -3,7 +3,8 @@
     "package": "mmmfrieddough.craftpilot.mixin",
     "compatibilityLevel": "JAVA_21",
     "mixins": [
-        "BlockItemMixinCommon"
+        "BlockItemMixinCommon",
+        "LivingEntityMixin"
     ],
     "client": [
         "BlockItemMixinClient",

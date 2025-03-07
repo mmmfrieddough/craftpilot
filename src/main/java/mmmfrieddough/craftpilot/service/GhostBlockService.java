@@ -1,5 +1,6 @@
 package mmmfrieddough.craftpilot.service;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
@@ -19,10 +20,12 @@ import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.GameMode;
@@ -85,6 +88,61 @@ public final class GhostBlockService {
         return true;
     }
 
+    private static boolean placeGhostBlock(MinecraftClient client, Hand hand, BlockPos pos, BlockState state,
+            boolean forceItem) {
+        ItemStack originalStack = null;
+        if (forceItem) {
+            // Temporarily set a fake item stack for the interaction
+            ItemStack itemStack = state.getBlock().asItem().getDefaultStack();
+            originalStack = client.player.getStackInHand(Hand.MAIN_HAND);
+            client.player.setStackInHand(Hand.MAIN_HAND, itemStack);
+        }
+
+        Vec3d playerPos = client.player.getPos();
+        Direction playerFacing = client.player.getHorizontalFacing();
+        BlockHitResult blockHitResult = new BlockHitResult(playerPos, playerFacing, pos, false);
+
+        // Set the global ghost block state and payload before interacting
+        GhostBlockGlobal.setBlockState(state);
+        GhostBlockGlobal.setPayload(new PlayerPlaceBlockPayload(hand, pos, state));
+
+        // Attempt to place and check result
+        ActionResult result = client.interactionManager.interactBlock(client.player, hand, blockHitResult);
+
+        // Reset global state after interaction
+        GhostBlockGlobal.clear();
+
+        if (forceItem) {
+            // Restore original hand item
+            client.player.setStackInHand(Hand.MAIN_HAND, originalStack);
+        }
+
+        return result.isAccepted() && client.world.getBlockState(pos) == state;
+    }
+
+    public static void handleGhostBlockPlaceAll(MinecraftClient client, IWorldManager worldManager, int maxAttempts) {
+        // Get initial ghost blocks map
+        Map<BlockPos, BlockState> ghostBlocks = worldManager.getGhostBlocks();
+        Map<BlockPos, BlockState> remainingBlocks = new HashMap<>(ghostBlocks);
+
+        // Continue retrying until max attempts reached or all blocks placed
+        int attempts = 0;
+        while (attempts < maxAttempts && !remainingBlocks.isEmpty()) {
+            Map<BlockPos, BlockState> remainingBlocksCopy = new HashMap<>(remainingBlocks);
+            for (Map.Entry<BlockPos, BlockState> entry : remainingBlocksCopy.entrySet()) {
+                BlockPos pos = entry.getKey();
+                BlockState state = entry.getValue();
+
+                if (state == null || !client.world.getWorldBorder().contains(pos)
+                        || placeGhostBlock(client, Hand.MAIN_HAND, pos, state, true)) {
+                    remainingBlocks.remove(pos);
+                }
+            }
+
+            attempts++;
+        }
+    }
+
     public static boolean handleGhostBlockPlace(MinecraftClient client) {
         GhostBlockTarget target = getCurrentTarget();
 
@@ -101,30 +159,14 @@ public final class GhostBlockService {
 
             // Special case for creative mode main hand - allow empty hand
             boolean emptyHandCreative = isCreative && hand == Hand.MAIN_HAND && itemStack.isEmpty();
-            if (emptyHandCreative) {
-                // Temporarily set a fake item stack for the interaction
-                itemStack = target.state.getBlock().asItem().getDefaultStack();
-                client.player.setStackInHand(hand, itemStack);
-            } else if (!itemStack.isItemEnabled(client.world.getEnabledFeatures()) || itemStack.isEmpty()
-                    || !itemStack.isOf(target.state.getBlock().asItem())
-                    || client.player.getItemCooldownManager().isCoolingDown(itemStack)) {
+
+            if (!emptyHandCreative && (!itemStack.isItemEnabled(client.world.getEnabledFeatures())
+                    || itemStack.isEmpty() || !itemStack.isOf(target.state.getBlock().asItem())
+                    || client.player.getItemCooldownManager().isCoolingDown(itemStack))) {
                 continue;
             }
 
-            BlockHitResult blockHitResult = new BlockHitResult(client.player.getPos(),
-                    client.player.getHorizontalFacing(), target.pos, false);
-
-            // Set the global ghost block state and payload before interacting
-            GhostBlockGlobal.blockState = target.state;
-            GhostBlockGlobal.payload = new PlayerPlaceBlockPayload(hand, target.pos, target.state);
-            client.interactionManager.interactBlock(client.player, hand, blockHitResult);
-            GhostBlockGlobal.blockState = null;
-            GhostBlockGlobal.payload = null;
-
-            // Restore empty hand if we temporarily set it
-            if (emptyHandCreative) {
-                client.player.setStackInHand(hand, ItemStack.EMPTY);
-            }
+            placeGhostBlock(client, hand, target.pos, target.state, emptyHandCreative);
 
             // Play animation
             client.player.swingHand(hand);

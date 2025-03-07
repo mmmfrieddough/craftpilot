@@ -41,15 +41,17 @@ public class ServerNetworking {
     private static void handlePlacementPacket(ServerWorld world, ServerPlayerEntity player, Hand hand,
             BlockPos blockPos, BlockState blockState) {
         ItemStack itemStack;
-        // If the player is in creative mode with an empty hand, use the default stack
-        if (player.isCreative() && player.getStackInHand(hand).isEmpty()) {
+        // If the player is in creative mode, use the default stack
+        if (player.isCreative()) {
             itemStack = blockState.getBlock().asItem().getDefaultStack();
         } else {
             itemStack = player.getStackInHand(hand);
         }
+
         if (player.isLoaded()) {
             if (itemStack.isItemEnabled(world.getEnabledFeatures())) {
-                if (player.canInteractWithBlockAt(blockPos, 1.0)) {
+                // The player must be in range or in creative mode
+                if (player.canInteractWithBlockAt(blockPos, 1.0) || player.isCreative()) {
                     player.updateLastActionTime();
                     int i = player.getWorld().getTopYInclusive();
                     if (blockPos.getY() <= i) {
@@ -59,10 +61,12 @@ public class ServerNetworking {
                                     player.getHorizontalFacing(), blockPos, false);
 
                             // Set the ghost block state before interacting with the block
-                            GhostBlockGlobal.blockState = blockState;
+                            GhostBlockGlobal.setBlockState(blockState);
+                            GhostBlockGlobal.setHandItem(itemStack);
+                            GhostBlockGlobal.setActiveHand(hand);
                             ActionResult actionResult = player.interactionManager.interactBlock(player, world,
                                     itemStack, hand, blockHitResult);
-                            GhostBlockGlobal.blockState = null;
+                            GhostBlockGlobal.clear();
 
                             if (actionResult.isAccepted()) {
                                 Criteria.ANY_BLOCK_USE.trigger(player, blockPos, itemStack.copy());
