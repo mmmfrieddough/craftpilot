@@ -25,7 +25,7 @@ public class BlockItemMixinCommon {
     // Override the default block state returned by the getPlacementState method to
     // one from the global state
     @Inject(method = "getPlacementState", at = @At("HEAD"), cancellable = true)
-    private void injectGhostOrientation(ItemPlacementContext context, CallbackInfoReturnable<BlockState> cir) {
+    private void injectGhostState(ItemPlacementContext context, CallbackInfoReturnable<BlockState> cir) {
         if (GhostBlockGlobal.blockState != null) {
             BlockState originalBlockState = this.block.getPlacementState(context);
             BlockState injectedBlockState = GhostBlockGlobal.blockState;

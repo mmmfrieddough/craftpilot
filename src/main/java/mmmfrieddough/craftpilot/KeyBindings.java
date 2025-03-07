@@ -8,6 +8,7 @@ import org.lwjgl.glfw.GLFW;
 public class KeyBindings {
     private static KeyBinding clearKeyBinding;
     private static KeyBinding triggerKeyBinding;
+    private static KeyBinding acceptAllKeyBinding;
 
     public static void register() {
         KeyBinding clearKey = new KeyBinding("key.craftpilot.clear", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_C,
@@ -17,6 +18,10 @@ public class KeyBindings {
         KeyBinding triggerKey = new KeyBinding("key.craftpilot.trigger", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_R,
                 "key.categories.craftpilot");
         triggerKeyBinding = KeyBindingHelper.registerKeyBinding(triggerKey);
+
+        KeyBinding acceptAllKey = new KeyBinding("key.craftpilot.accept_all", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_V,
+                "key.categories.craftpilot");
+        acceptAllKeyBinding = KeyBindingHelper.registerKeyBinding(acceptAllKey);
     }
 
     public static KeyBinding getClearKeyBinding() {
@@ -25,5 +30,9 @@ public class KeyBindings {
 
     public static KeyBinding getTriggerKeyBinding() {
         return triggerKeyBinding;
+    }
+
+    public static KeyBinding getAcceptAllKeyBinding() {
+        return acceptAllKeyBinding;
     }
 }

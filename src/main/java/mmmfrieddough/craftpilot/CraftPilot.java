@@ -86,6 +86,11 @@ public class CraftPilot implements ModInitializer {
 			LOGGER.info("Triggering suggestions");
 			craftPilotService.triggerSuggestions(client);
 		}
+
+		if (KeyBindings.getAcceptAllKeyBinding().wasPressed()) {
+			LOGGER.info("Accepting all suggestions");
+			// craftPilotService.acceptAllSuggestions();
+		}
 	}
 
 	private void handleWorldChange(MinecraftClient client, ClientWorld world) {

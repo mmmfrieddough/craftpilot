@@ -1,6 +1,8 @@
 {
     "key.categories.craftpilot": "Craftpilot",
     "key.craftpilot.clear": "Clear Suggestions",
+    "key.craftpilot.accept_all": "Accept All Suggestions",
+    "key.craftpilot.trigger": "Trigger Suggestions",
     "text.autoconfig.craftpilot.title": "Craftpilot",
     "text.autoconfig.craftpilot.category.General": "General",
     "text.autoconfig.craftpilot.option.general.enableAutoTrigger": "Enable Auto Trigger",
