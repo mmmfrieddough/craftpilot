@@ -70,6 +70,7 @@ public class HttpModelConnector implements IModelConnector {
         currentRequestFuture
                 .thenAccept(response -> handleResponse(response, requestId, origin))
                 .exceptionally(throwable -> {
+                    generating = false;
                     Throwable cause = throwable.getCause();
                     if (cause instanceof CancellationException) {
                         return null;
