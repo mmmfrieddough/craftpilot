@@ -65,7 +65,7 @@ class CraftPilotServiceTest {
         service.processPendingBlockPlacements(world);
 
         verify(worldManager, never()).getGhostBlockState(any());
-        verify(modelConnector, never()).sendRequest(any(), any(), any());
+        verify(modelConnector, never()).sendRequest(any(), any(), any(), any());
     }
 
     @Test
@@ -87,7 +87,7 @@ class CraftPilotServiceTest {
 
         service.processPendingBlockPlacements(world);
 
-        verify(modelConnector).sendRequest(eq(config.model), any(), any());
+        verify(modelConnector).sendRequest(eq(config.model), any(), any(), any());
     }
 
     @Test
@@ -132,7 +132,7 @@ class CraftPilotServiceTest {
             service.onPlayerBlockPlaced(testPos);
         }
 
-        verify(modelConnector).sendRequest(eq(config.model), any(), any());
+        verify(modelConnector).sendRequest(eq(config.model), any(), any(), any());
     }
 
     @Test
@@ -149,7 +149,7 @@ class CraftPilotServiceTest {
         }
 
         verify(worldManager).clearBlockStates();
-        verify(modelConnector).sendRequest(eq(config.model), any(), any());
+        verify(modelConnector).sendRequest(eq(config.model), any(), any(), any());
     }
 
     @Test
