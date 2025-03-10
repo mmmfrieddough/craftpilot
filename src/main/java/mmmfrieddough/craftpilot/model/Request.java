@@ -1,5 +1,7 @@
 package mmmfrieddough.craftpilot.model;
 
+import java.util.Map;
+
 public class Request {
     private String platform;
     private int version_number;
@@ -8,7 +10,8 @@ public class Request {
     private int max_iterations;
     private int max_blocks;
     private float air_probability_iteration_scaling;
-    private String[][][] structure;
+    private int[][][] structure;
+    private Map<Integer, String> palette;
 
     public String getPlatform() {
         return platform;
@@ -66,11 +69,19 @@ public class Request {
         this.air_probability_iteration_scaling = airProbabilityIterationScaling;
     }
 
-    public String[][][] getStructure() {
+    public int[][][] getStructure() {
         return structure;
     }
 
-    public void setStructure(String[][][] structure) {
+    public void setStructure(int[][][] structure) {
         this.structure = structure;
+    }
+
+    public Map<Integer, String> getPalette() {
+        return palette;
+    }
+
+    public void setPalette(Map<Integer, String> palette) {
+        this.palette = palette;
     }
 }

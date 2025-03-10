@@ -1,6 +1,8 @@
 package mmmfrieddough.craftpilot.service;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import mmmfrieddough.craftpilot.CraftPilot;
@@ -156,19 +158,55 @@ public class CraftPilotService {
     }
 
     /**
-     * Requests suggestions from the model for the given world and position.
-     * This method sends a request to the model connector with the block matrix
-     * around the given position.
+     * Gets the blocks matrix with a palette for efficient storage.
      * 
-     * @param world The world to request suggestions for
-     * @param pos   The position to request suggestions around
+     * @param world    The world to get blocks from
+     * @param startPos The starting position
+     * @param size     The size of the matrix (in each dimension)
+     * @return A record containing the block matrix of indices and a palette mapping
+     *         indices to block state strings
      */
+    private BlockMatrixWithPalette getBlocksMatrix(World world, BlockPos startPos, int size) {
+        int[][][] matrix = new int[size][size][size];
+        Map<String, Integer> blockToIndex = new HashMap<>();
+        Map<Integer, String> palette = new HashMap<>();
+        int nextIndex = 0;
+
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                for (int z = 0; z < size; z++) {
+                    BlockPos pos = startPos.add(x, y, z);
+                    BlockState state = worldManager.getBlockState(world, pos);
+                    String blockStateString = BlockMatrixUtils.getBlockStateString(state);
+
+                    // Get or create palette index
+                    Integer index = blockToIndex.get(blockStateString);
+                    if (index == null) {
+                        index = nextIndex++;
+                        blockToIndex.put(blockStateString, index);
+                        palette.put(index, blockStateString);
+                    }
+
+                    matrix[z][y][x] = index;
+                }
+            }
+        }
+
+        return new BlockMatrixWithPalette(matrix, palette);
+    }
+
+    /**
+     * Record to store a block matrix with its palette.
+     */
+    private record BlockMatrixWithPalette(int[][][] matrix, Map<Integer, String> palette) {
+    }
+
     private void requestSuggestions(World world, BlockPos pos) {
         final int offset = config.general.suggestionRange;
         final int size = offset * 2 + 1;
         BlockPos startPos = pos.add(-offset, -offset, -offset);
-        String[][][] matrix = getBlocksMatrix(world, startPos, size);
-        modelConnector.sendRequest(config.model, matrix, startPos);
+        BlockMatrixWithPalette matrixWithPalette = getBlocksMatrix(world, startPos, size);
+        modelConnector.sendRequest(config.model, matrixWithPalette.matrix(), matrixWithPalette.palette(), startPos);
         resetCounters();
     }
 
@@ -227,20 +265,6 @@ public class CraftPilotService {
     private void resetCounters() {
         placedBlockCount = 0;
         nonMatchingBlockCount = 0;
-    }
-
-    private String[][][] getBlocksMatrix(World world, BlockPos startPos, int size) {
-        String[][][] matrix = new String[size][size][size];
-        for (int x = 0; x < size; x++) {
-            for (int y = 0; y < size; y++) {
-                for (int z = 0; z < size; z++) {
-                    BlockPos pos = startPos.add(x, y, z);
-                    BlockState state = worldManager.getBlockState(world, pos);
-                    matrix[z][y][x] = BlockMatrixUtils.getBlockStateString(state);
-                }
-            }
-        }
-        return matrix;
     }
 
     private void processResponse(ResponseItem item) {
