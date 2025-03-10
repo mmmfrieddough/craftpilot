@@ -13,6 +13,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeoutException;
+import java.util.Map;
 
 import org.slf4j.Logger;
 
@@ -46,10 +47,11 @@ public class HttpModelConnector implements IModelConnector {
         this.responseQueue = new ConcurrentLinkedQueue<>();
     }
 
-    public void sendRequest(ModConfig.Model config, String[][][] matrix, BlockPos origin) {
+    @Override
+    public void sendRequest(ModConfig.Model config, int[][][] matrix, Map<Integer, String> palette, BlockPos origin) {
         final long requestId = currentRequestId;
 
-        Request request = buildRequest(matrix, config);
+        Request request = buildRequest(matrix, palette, config);
         String jsonPayload = gson.toJson(request);
 
         HttpRequest httpRequest = HttpRequest.newBuilder()
@@ -113,7 +115,7 @@ public class HttpModelConnector implements IModelConnector {
         return generating || !responseQueue.isEmpty();
     }
 
-    private Request buildRequest(String[][][] matrix, ModConfig.Model modelConfig) {
+    private Request buildRequest(int[][][] matrix, Map<Integer, String> palette, ModConfig.Model modelConfig) {
         Request request = new Request();
         request.setPlatform("java");
         request.setVersion_number(Reference.MC_DATA_VERSION);
@@ -123,6 +125,7 @@ public class HttpModelConnector implements IModelConnector {
         request.setMax_blocks(modelConfig.maxBlocks);
         request.setAir_probability_iteration_scaling(modelConfig.airProbabilityIterationScaling);
         request.setStructure(matrix);
+        request.setPalette(palette);
         return request;
     }
 
