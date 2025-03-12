@@ -9,7 +9,7 @@ public class Request {
     private int start_radius;
     private int max_iterations;
     private int max_blocks;
-    private float air_probability_iteration_scaling;
+    private int max_alternatives;
     private int[][][] structure;
     private Map<Integer, String> palette;
 
@@ -61,12 +61,12 @@ public class Request {
         this.max_blocks = maxBlocks;
     }
 
-    public float getAir_probability_iteration_scaling() {
-        return air_probability_iteration_scaling;
+    public int getMax_alternatives() {
+        return max_alternatives;
     }
 
-    public void setAir_probability_iteration_scaling(float airProbabilityIterationScaling) {
-        this.air_probability_iteration_scaling = airProbabilityIterationScaling;
+    public void setMax_alternatives(int maxAlternatives) {
+        this.max_alternatives = maxAlternatives;
     }
 
     public int[][][] getStructure() {
