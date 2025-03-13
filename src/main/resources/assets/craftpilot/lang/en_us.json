@@ -3,6 +3,7 @@
     "key.craftpilot.clear": "Clear Suggestions",
     "key.craftpilot.accept_all": "Accept All Suggestions",
     "key.craftpilot.trigger": "Trigger Suggestions",
+    "key.craftpilot.select_alternative": "Select Alternative Suggestion",
     "text.autoconfig.craftpilot.title": "Craftpilot",
     "text.autoconfig.craftpilot.category.General": "General",
     "text.autoconfig.craftpilot.option.general.enableAutoTrigger": "Enable Auto Trigger",

@@ -14,7 +14,8 @@
         "ClientBedBlockMixin",
         "WorldMixin",
         "AbstractBlockMixin",
-        "DoorBlockMixin"
+        "DoorBlockMixin",
+        "MouseMixin"
     ],
     "injectors": {
         "defaultRequire": 1

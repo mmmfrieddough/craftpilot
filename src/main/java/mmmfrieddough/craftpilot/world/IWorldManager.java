@@ -7,7 +7,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public interface IWorldManager {
-    public void setBlockState(BlockPos pos, BlockState blockState);
+    public void setBlockState(int alternativeNum, int previousAlternativeNum, BlockPos pos, BlockState blockState);
 
     public BlockState getGhostBlockState(BlockPos pos);
 
@@ -18,4 +18,14 @@ public interface IWorldManager {
     public void clearBlockStates();
 
     public Map<BlockPos, BlockState> getGhostBlocks();
+
+    public void advanceSelectedAlternativeNum(int delta);
+
+    public int getTotalAlternativeNum();
+
+    public int getSelectedAlternativeNum();
+
+    public void pruneAlternatives();
+
+    public boolean hasGhostBlocks();
 }
