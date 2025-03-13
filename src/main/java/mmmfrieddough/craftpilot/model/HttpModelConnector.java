@@ -161,8 +161,9 @@ public class HttpModelConnector implements IModelConnector {
             while ((line = reader.readLine()) != null && requestId == currentRequestId) {
                 ResponseItem responseItem = gson.fromJson(line, ResponseItem.class);
                 BlockPos position = calculateResponsePosition(responseItem, origin);
-                responseItem = new ResponseItem(responseItem.getAlternativeNum(), responseItem.getBlockState(),
-                        position.getX(), position.getY(), position.getZ());
+                responseItem = new ResponseItem(responseItem.getAlternativeNum(),
+                        responseItem.getPreviousAlternativeNum(), responseItem.getBlockState(), position.getX(),
+                        position.getY(), position.getZ());
                 responseQueue.offer(responseItem);
             }
         } catch (Exception e) {
