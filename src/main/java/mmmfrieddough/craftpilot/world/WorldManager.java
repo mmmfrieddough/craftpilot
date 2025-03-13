@@ -69,12 +69,11 @@ public class WorldManager implements IWorldManager {
 
     @Override
     public void advanceSelectedAlternativeNum(int delta) {
-        System.out.println("Selected alternative num: " + selectedAlternativeNum);
-        System.out.println("Delta: " + delta);
-        System.out.println("Ghost blocks size: " + ghostBlocks.size());
+        if (ghostBlocks.size() <= 1) {
+            return;
+        }
         selectedAlternativeNum = ((selectedAlternativeNum + delta) % ghostBlocks.size() + ghostBlocks.size())
                 % ghostBlocks.size();
-        System.out.println("New selected alternative num: " + selectedAlternativeNum);
     }
 
     @Override
