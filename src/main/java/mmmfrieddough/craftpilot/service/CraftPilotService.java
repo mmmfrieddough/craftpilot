@@ -154,6 +154,7 @@ public class CraftPilotService {
             return;
         }
         cancelSuggestions();
+        worldManager.pruneAlternatives();
         GhostBlockService.handleGhostBlockPlaceAll(client, worldManager, config.general.acceptAllMaxIterations);
     }
 
@@ -205,6 +206,7 @@ public class CraftPilotService {
         final int offset = config.general.suggestionRange;
         final int size = offset * 2 + 1;
         BlockPos startPos = pos.add(-offset, -offset, -offset);
+        worldManager.pruneAlternatives();
         BlockMatrixWithPalette matrixWithPalette = getBlocksMatrix(world, startPos, size);
         modelConnector.sendRequest(config.model, matrixWithPalette.matrix(), matrixWithPalette.palette(), startPos);
         resetCounters();
@@ -269,10 +271,7 @@ public class CraftPilotService {
 
     private void processResponse(ResponseItem item) {
         BlockState blockState = BlockStateHelper.parseBlockState(item.getBlockState());
-        if (blockState.isAir()) {
-            return;
-        }
         BlockPos pos = new BlockPos(item.getX(), item.getY(), item.getZ());
-        worldManager.setBlockState(pos, blockState);
+        worldManager.setBlockState(item.getAlternativeNum(), item.getPreviousAlternativeNum(), pos, blockState);
     }
 }

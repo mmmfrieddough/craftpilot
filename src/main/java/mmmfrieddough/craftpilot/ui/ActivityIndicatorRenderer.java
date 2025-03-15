@@ -2,6 +2,7 @@ package mmmfrieddough.craftpilot.ui;
 
 import mmmfrieddough.craftpilot.Reference;
 import mmmfrieddough.craftpilot.model.IModelConnector;
+import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderLayer;
@@ -17,22 +18,14 @@ public class ActivityIndicatorRenderer {
     // Animation properties
     private static final float MAX_ALPHA = 0.6f;
     private static final float MIN_ALPHA = 0.2f;
-    private static final int FADE_MS = 1000;
-    private long fadeStartTime = 0;
+    private static final float FADE_MS = 1000;
+    private long previousTime = 0;
+    private boolean fadingIn = false;
+    private float alpha = MIN_ALPHA;
 
     // Image size
     private static final int IMG_WIDTH = 32;
     private static final int IMG_HEIGHT = 32;
-
-    private float calculateAlpha() {
-        // Calculate alpha based on elapsed time
-        long currentTime = Util.getMeasuringTimeMs();
-        long elapsedMs = currentTime - fadeStartTime;
-        float elapsedCycles = (float) elapsedMs / FADE_MS;
-        // Sine wave from 0 to 1 to 0
-        float progress = 0.5f * (1.0f + (float) Math.sin((elapsedCycles + 0.5) * Math.PI));
-        return MIN_ALPHA + progress * (MAX_ALPHA - MIN_ALPHA);
-    }
 
     private void renderImage(DrawContext context, MinecraftClient client, float alpha) {
         // Calculate position (top right corner with some padding)
@@ -50,21 +43,24 @@ public class ActivityIndicatorRenderer {
     }
 
     public void render(DrawContext context, MinecraftClient client, IModelConnector modelConnector,
-            RenderTickCounter tickDelta) {
-        if (!modelConnector.isGenerating()) {
-            fadeStartTime = 0;
-            return;
+            IWorldManager worldManager, RenderTickCounter tickDelta) {
+        long currentTime = Util.getMeasuringTimeMs();
+        float alphaChange = (currentTime - previousTime) / FADE_MS;
+        boolean generating = modelConnector.isGenerating();
+        boolean hasGhostBlocks = worldManager.hasGhostBlocks();
+        float minAlpha = generating || hasGhostBlocks ? MIN_ALPHA : 0.0f;
+        if (generating && fadingIn || !generating && hasGhostBlocks) {
+            alpha = Math.min(MAX_ALPHA, alpha + alphaChange);
+            if (alpha == MAX_ALPHA) {
+                fadingIn = false;
+            }
+        } else {
+            alpha = Math.max(minAlpha, alpha - alphaChange);
+            if (alpha == minAlpha) {
+                fadingIn = true;
+            }
         }
-
-        if (fadeStartTime == 0) {
-            fadeStartTime = Util.getMeasuringTimeMs();
-        }
-
-        float alpha = calculateAlpha();
-
-        // Only render if we have some visibility
-        if (alpha > 0.01f) {
-            renderImage(context, client, alpha);
-        }
+        renderImage(context, client, alpha);
+        previousTime = currentTime;
     }
 }
