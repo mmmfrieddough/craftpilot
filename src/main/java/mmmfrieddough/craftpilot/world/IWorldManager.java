@@ -19,9 +19,9 @@ public interface IWorldManager {
 
     public Map<BlockPos, BlockState> getGhostBlocks();
 
-    public void advanceSelectedAlternativeNum(int delta);
-
     public int getTotalAlternativeNum();
+
+    public void setSelectedAlternativeNum(int num);
 
     public int getSelectedAlternativeNum();
 
