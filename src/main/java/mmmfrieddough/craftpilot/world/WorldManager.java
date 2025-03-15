@@ -68,17 +68,15 @@ public class WorldManager implements IWorldManager {
     }
 
     @Override
-    public void advanceSelectedAlternativeNum(int delta) {
-        if (ghostBlocks.size() <= 1) {
-            return;
-        }
-        selectedAlternativeNum = ((selectedAlternativeNum + delta) % ghostBlocks.size() + ghostBlocks.size())
-                % ghostBlocks.size();
+    public int getTotalAlternativeNum() {
+        return ghostBlocks.size();
     }
 
     @Override
-    public int getTotalAlternativeNum() {
-        return ghostBlocks.size();
+    public void setSelectedAlternativeNum(int num) {
+        if (ghostBlocks.containsKey(num)) {
+            selectedAlternativeNum = num;
+        }
     }
 
     @Override
