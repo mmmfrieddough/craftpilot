@@ -99,18 +99,32 @@ class CraftPilotServiceTest {
         verify(worldManager).clearBlockState(testPos);
     }
 
-    // @Test
-    // void processResponses_ValidResponse_SetsBlockState() {
-    // ResponseItem response = new ResponseItem("minecraft:stone", 5, 5, 5);
+    @Test
+    void processResponses_ValidResponse_SetsBlockState() {
+        ResponseItem response = new ResponseItem(0, 0, "minecraft:stone", 5, 5, 5);
 
-    // when(modelConnector.getNextResponse()).thenReturn(response).thenReturn(null);
-    // service.onPlayerBlockPlaced(testPos);
+        when(modelConnector.getNextResponse()).thenReturn(response).thenReturn(null);
 
-    // service.processResponses();
+        service.processResponses();
 
-    // verify(worldManager).setBlockState(any(BlockPos.class),
-    // any(BlockState.class));
-    // }
+        verify(worldManager).setBlockState(eq(0), eq(0), eq(new BlockPos(5, 5, 5)), any(BlockState.class));
+    }
+
+    @Test
+    void processResponses_MultipleAlternatives_SetsCorrectAlternativeNumbers() {
+        ResponseItem response1 = new ResponseItem(1, 0, "minecraft:stone", 1, 1, 1);
+        ResponseItem response2 = new ResponseItem(2, 1, "minecraft:dirt", 1, 1, 1);
+
+        when(modelConnector.getNextResponse())
+                .thenReturn(response1)
+                .thenReturn(response2)
+                .thenReturn(null);
+
+        service.processResponses();
+
+        verify(worldManager).setBlockState(eq(1), eq(0), eq(new BlockPos(1, 1, 1)), any(BlockState.class));
+        verify(worldManager).setBlockState(eq(2), eq(1), eq(new BlockPos(1, 1, 1)), any(BlockState.class));
+    }
 
     @Test
     void clearAll_ClearsAllStatesAndStopsRequest() {
@@ -153,22 +167,20 @@ class CraftPilotServiceTest {
         verify(modelConnector).sendRequest(eq(config.model), any(), any(), any());
     }
 
-    // @Test
-    // void processResponses_ExceptionThrown_ContinuesProcessing() {
-    // ResponseItem badResponse = new ResponseItem("invalid:format", 1, 1, 1);
-    // ResponseItem goodResponse = new ResponseItem("minecraft:stone", 2, 2, 2);
+    @Test
+    void processResponses_ExceptionThrown_ContinuesProcessing() {
+        ResponseItem badResponse = new ResponseItem(0, 0, "invalid:format", 1, 1, 1);
+        ResponseItem goodResponse = new ResponseItem(0, 0, "minecraft:stone", 2, 2, 2);
 
-    // when(modelConnector.getNextResponse())
-    // .thenReturn(badResponse)
-    // .thenReturn(goodResponse)
-    // .thenReturn(null);
+        when(modelConnector.getNextResponse())
+                .thenReturn(badResponse)
+                .thenReturn(goodResponse)
+                .thenReturn(null);
 
-    // service.processResponses();
+        service.processResponses();
 
-    // // Verify that despite the exception, processing continued and the good
-    // response
-    // // was handled
-    // verify(worldManager).setBlockState(eq(new BlockPos(2, 2, 2)),
-    // any(BlockState.class));
-    // }
+        // Verify that despite the exception, processing continued and the good response
+        // was handled
+        verify(worldManager).setBlockState(eq(0), eq(0), eq(new BlockPos(2, 2, 2)), any(BlockState.class));
+    }
 }
