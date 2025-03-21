@@ -19,7 +19,7 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 
 public class ServerNetworking {
-    public static void registerReceivers() {
+    public static void init() {
         ServerPlayNetworking.registerGlobalReceiver(PlayerPlaceBlockPayload.ID, (payload, context) -> {
             context.server()
                     .execute(() -> handlePlacementPacket(

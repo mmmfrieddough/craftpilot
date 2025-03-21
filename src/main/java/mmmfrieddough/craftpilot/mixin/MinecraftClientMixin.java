@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import mmmfrieddough.craftpilot.CraftPilot;
+import mmmfrieddough.craftpilot.CraftPilotClient;
 import mmmfrieddough.craftpilot.KeyBindings;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import mmmfrieddough.craftpilot.service.CraftPilotService;
@@ -41,9 +41,9 @@ public class MinecraftClientMixin {
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(CallbackInfo ci) {
-        config = CraftPilot.getInstance().getConfig();
-        worldManager = CraftPilot.getInstance().getWorldManager();
-        craftPilotService = CraftPilot.getInstance().getCraftPilotService();
+        config = CraftPilotClient.getInstance().getConfig();
+        worldManager = CraftPilotClient.getInstance().getWorldManager();
+        craftPilotService = CraftPilotClient.getInstance().getCraftPilotService();
     }
 
     @Inject(method = "doItemPick", at = @At("HEAD"), cancellable = true)

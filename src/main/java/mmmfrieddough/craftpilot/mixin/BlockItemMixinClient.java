@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import mmmfrieddough.craftpilot.CraftPilot;
+import mmmfrieddough.craftpilot.CraftPilotClient;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import mmmfrieddough.craftpilot.service.CraftPilotService;
 import net.minecraft.block.BlockState;
@@ -27,14 +27,14 @@ public class BlockItemMixinClient {
         }
 
         // Check if auto trigger is enabled
-        ModConfig config = CraftPilot.getInstance().getConfig();
+        ModConfig config = CraftPilotClient.getInstance().getConfig();
         if (!config.general.enableAutoTrigger) {
             return;
         }
 
         // Check if a block was actually placed
         if (cir.getReturnValue().isAccepted()) {
-            CraftPilotService craftPilotService = CraftPilot.getInstance().getCraftPilotService();
+            CraftPilotService craftPilotService = CraftPilotClient.getInstance().getCraftPilotService();
             craftPilotService.onPlayerBlockPlaced(blockPos);
         }
     }
