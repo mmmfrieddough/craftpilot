@@ -11,7 +11,7 @@ public class NetworkManager {
         PayloadTypeRegistry.playC2S().register(PlayerPlaceBlockPayload.ID, PlayerPlaceBlockPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(ModHandshakePayload.ID, ModHandshakePayload.CODEC);
         PayloadTypeRegistry.playS2C().register(ModHandshakePayload.ID, ModHandshakePayload.CODEC);
-        ServerNetworking.registerReceivers();
+        ServerNetworking.init();
     }
 
     @Environment(EnvType.CLIENT)

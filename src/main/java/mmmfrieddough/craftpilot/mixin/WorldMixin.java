@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import mmmfrieddough.craftpilot.CraftPilot;
+import mmmfrieddough.craftpilot.CraftPilotClient;
 import mmmfrieddough.craftpilot.service.CraftPilotService;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
@@ -19,7 +19,7 @@ public abstract class WorldMixin {
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(CallbackInfo ci) {
-        craftPilotService = CraftPilot.getInstance().getCraftPilotService();
+        craftPilotService = CraftPilotClient.getInstance().getCraftPilotService();
     }
 
     @Shadow
