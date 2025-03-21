@@ -9,12 +9,15 @@ import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import mmmfrieddough.craftpilot.model.IModelConnector;
 import mmmfrieddough.craftpilot.model.ResponseItem;
+import mmmfrieddough.craftpilot.network.NetworkManager;
 import mmmfrieddough.craftpilot.service.GhostBlockService.GhostBlockTarget;
 import mmmfrieddough.craftpilot.util.BlockMatrixUtils;
 import mmmfrieddough.craftpilot.world.BlockStateHelper;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -150,9 +153,22 @@ public class CraftPilotService {
     }
 
     public void acceptAll(MinecraftClient client) {
+        // Validate creative mode
         if (!client.interactionManager.getCurrentGameMode().isCreative()) {
+            client.player.sendMessage(
+                    Text.translatable("message.craftpilot.creative_required_for_accept_all").formatted(Formatting.RED),
+                    true);
             return;
         }
+
+        // Validate mod presence on server
+        if (!NetworkManager.isModPresentOnServer()) {
+            client.player.sendMessage(
+                    Text.translatable("message.craftpilot.server_required_for_accept_all").formatted(Formatting.RED),
+                    true);
+            return;
+        }
+
         cancelSuggestions();
         worldManager.pruneAlternatives();
         GhostBlockService.handleGhostBlockPlaceAll(client, worldManager, config.general.acceptAllMaxIterations);
