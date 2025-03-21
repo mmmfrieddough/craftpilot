@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import mmmfrieddough.craftpilot.CraftPilot;
+import mmmfrieddough.craftpilot.CraftPilotClient;
 import mmmfrieddough.craftpilot.KeyBindings;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.client.MinecraftClient;
@@ -25,7 +25,7 @@ public class MouseMixin {
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(CallbackInfo ci) {
-        worldManager = CraftPilot.getInstance().getWorldManager();
+        worldManager = CraftPilotClient.getInstance().getWorldManager();
     }
 
     @Inject(method = "onMouseScroll", at = @At("HEAD"), cancellable = true)

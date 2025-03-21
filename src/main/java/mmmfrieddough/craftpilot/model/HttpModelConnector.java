@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 
 import com.google.gson.Gson;
 
-import mmmfrieddough.craftpilot.CraftPilot;
+import mmmfrieddough.craftpilot.CraftPilotClient;
 import mmmfrieddough.craftpilot.Reference;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import net.minecraft.client.MinecraftClient;
@@ -28,7 +28,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 
 public class HttpModelConnector implements IModelConnector {
-    private static final Logger LOGGER = CraftPilot.LOGGER;
+    private static final Logger LOGGER = CraftPilotClient.LOGGER;
 
     private final HttpClient httpClient;
     private final Gson gson;

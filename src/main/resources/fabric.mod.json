@@ -13,10 +13,13 @@
 	},
 	"license": "MIT",
 	"icon": "assets/craftpilot/icon.png",
-	"environment": "client",
+	"environment": "*",
 	"entrypoints": {
 		"main": [
 			"mmmfrieddough.craftpilot.CraftPilot"
+		],
+		"client": [
+			"mmmfrieddough.craftpilot.CraftPilotClient"
 		],
 		"modmenu": [
 			"mmmfrieddough.craftpilot.config.ModMenuIntegration"

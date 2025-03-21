@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import mmmfrieddough.craftpilot.network.NetworkManager;
 import mmmfrieddough.craftpilot.network.payloads.PlayerPlaceBlockPayload;
 import mmmfrieddough.craftpilot.util.GhostBlockGlobal;
 import mmmfrieddough.craftpilot.world.IWorldManager;
@@ -20,7 +21,9 @@ import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -127,6 +130,7 @@ public final class GhostBlockService {
 
         // Continue retrying until max attempts reached or all blocks placed
         int attempts = 0;
+        boolean placedAny = false;
         while (attempts < maxAttempts && !remainingBlocks.isEmpty()) {
             Map<BlockPos, BlockState> remainingBlocksCopy = new HashMap<>(remainingBlocks);
             for (Map.Entry<BlockPos, BlockState> entry : remainingBlocksCopy.entrySet()) {
@@ -136,14 +140,27 @@ public final class GhostBlockService {
                 if (state == null || !client.world.getWorldBorder().contains(pos)
                         || placeGhostBlock(client, Hand.MAIN_HAND, pos, state, true)) {
                     remainingBlocks.remove(pos);
+                    placedAny = true;
                 }
             }
 
             attempts++;
         }
+
+        // Play animation if any blocks were placed
+        if (placedAny) {
+            client.player.swingHand(Hand.MAIN_HAND);
+        }
     }
 
     public static boolean handleGhostBlockPlace(MinecraftClient client) {
+        if (!NetworkManager.isModPresentOnServer()) {
+            client.player.sendMessage(
+                    Text.translatable("message.craftpilot.server_required_for_easy_place").formatted(Formatting.RED),
+                    true);
+            return false;
+        }
+
         GhostBlockTarget target = getCurrentTarget();
 
         if (target == null || !client.world.getWorldBorder().contains(target.pos())

@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 
-import mmmfrieddough.craftpilot.CraftPilot;
+import mmmfrieddough.craftpilot.CraftPilotClient;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import mmmfrieddough.craftpilot.service.GhostBlockRenderService;
 import mmmfrieddough.craftpilot.service.GhostBlockService;
@@ -41,8 +41,8 @@ public class WorldRendererMixin {
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(CallbackInfo ci) {
-        config = CraftPilot.getInstance().getConfig();
-        worldManager = CraftPilot.getInstance().getWorldManager();
+        config = CraftPilotClient.getInstance().getConfig();
+        worldManager = CraftPilotClient.getInstance().getWorldManager();
     }
 
     @Inject(method = "render", at = @At("HEAD"))
