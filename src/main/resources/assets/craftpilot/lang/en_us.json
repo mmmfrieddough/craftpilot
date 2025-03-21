@@ -31,6 +31,8 @@
     "text.autoconfig.craftpilot.option.model.maxBlocks.@Tooltip": "The maximum number of blocks the model can generate",
     "text.autoconfig.craftpilot.option.model.maxAlternatives": "Max Alternatives",
     "text.autoconfig.craftpilot.option.model.maxAlternatives.@Tooltip": "The maximum number of alternative suggestions the model can generate",
+    "text.autoconfig.craftpilot.option.model.minAlternativeProbability": "Min Alternative Probability",
+    "text.autoconfig.craftpilot.option.model.minAlternativeProbability.@Tooltip": "The minimum probability a block must have to branch off into an alternative suggestion",
     "text.autoconfig.craftpilot.category.Rendering": "Rendering",
     "text.autoconfig.craftpilot.option.rendering.renderDistance": "Render Distance",
     "text.autoconfig.craftpilot.option.rendering.renderDistance.@Tooltip": "The maximum distance the suggested blocks are rendered at",

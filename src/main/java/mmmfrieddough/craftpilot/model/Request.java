@@ -10,6 +10,7 @@ public class Request {
     private int max_iterations;
     private int max_blocks;
     private int max_alternatives;
+    private float min_alternative_probability;
     private int[][][] structure;
     private Map<Integer, String> palette;
 
@@ -67,6 +68,14 @@ public class Request {
 
     public void setMax_alternatives(int maxAlternatives) {
         this.max_alternatives = maxAlternatives;
+    }
+
+    public float getMin_alternative_probability() {
+        return min_alternative_probability;
+    }
+
+    public void setMin_alternative_probability(float minAlternativeProbability) {
+        this.min_alternative_probability = minAlternativeProbability;
     }
 
     public int[][][] getStructure() {
