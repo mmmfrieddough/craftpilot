@@ -43,5 +43,8 @@
     "text.autoconfig.craftpilot.option.rendering.normalOutlineColor": "Normal Outline Color",
     "text.autoconfig.craftpilot.option.rendering.normalOutlineColor.@Tooltip": "The color of the outline on the suggested blocks",
     "text.autoconfig.craftpilot.option.rendering.targetedOutlineColor": "Targeted Outline Color",
-    "text.autoconfig.craftpilot.option.rendering.targetedOutlineColor.@Tooltip": "The color of the outline on the targeted suggested block"
+    "text.autoconfig.craftpilot.option.rendering.targetedOutlineColor.@Tooltip": "The color of the outline on the targeted suggested block",
+    "message.craftpilot.creative_required_for_accept_all": "Accepting all suggestions is only available in creative mode",
+    "message.craftpilot.server_required_for_accept_all": "Accepting all suggestions is only available when Craftpilot is present on the server",
+    "message.craftpilot.server_required_for_easy_place": "Easy place is only available when Craftpilot is present on the server"
 }

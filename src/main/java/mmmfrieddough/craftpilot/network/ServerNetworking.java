@@ -1,5 +1,6 @@
 package mmmfrieddough.craftpilot.network;
 
+import mmmfrieddough.craftpilot.network.payloads.ModHandshakePayload;
 import mmmfrieddough.craftpilot.network.payloads.PlayerPlaceBlockPayload;
 import mmmfrieddough.craftpilot.util.GhostBlockGlobal;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -24,6 +25,11 @@ public class ServerNetworking {
                     .execute(() -> handlePlacementPacket(
                             context.server().getWorld(context.player().getEntityWorld().getRegistryKey()),
                             context.player(), payload.hand(), payload.blockPos(), payload.blockState()));
+        });
+
+        // Add handler for mod presence check
+        ServerPlayNetworking.registerGlobalReceiver(ModHandshakePayload.ID, (payload, context) -> {
+            // No need to do anything, the channel being registered is enough
         });
     }
 

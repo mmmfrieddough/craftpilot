@@ -15,11 +15,14 @@ import mmmfrieddough.craftpilot.ui.AlternativesRenderer;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import mmmfrieddough.craftpilot.world.WorldManager;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
+import net.fabricmc.loader.api.FabricLoader;
 
 public class CraftPilot implements ModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger(Reference.MOD_ID);
@@ -57,9 +60,20 @@ public class CraftPilot implements ModInitializer {
 
 		KeyBindings.register();
 		NetworkManager.init();
+
+		// Initialize client-only components
+		if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
+			initClient();
+		}
+
 		registerCallbacks();
 
 		LOGGER.info("Craftpilot initialized");
+	}
+
+	@Environment(EnvType.CLIENT)
+	private void initClient() {
+		NetworkManager.initClient();
 	}
 
 	private void initializeConfig() {
@@ -91,7 +105,6 @@ public class CraftPilot implements ModInitializer {
 		}
 
 		if (KeyBindings.getAcceptAllKeyBinding().wasPressed()) {
-			LOGGER.info("Accepting all suggestions");
 			craftPilotService.acceptAll(client);
 		}
 	}
