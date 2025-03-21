@@ -46,7 +46,9 @@ public class ModConfig implements ConfigData {
         @Tooltip
         public int maxBlocks = 20;
         @Tooltip
-        public float airProbabilityIterationScaling = 0.0f;
+        public int maxAlternatives = 5;
+        @Tooltip
+        public float minAlternativeProbability = 0.3f;
     }
 
     @Category("Rendering")

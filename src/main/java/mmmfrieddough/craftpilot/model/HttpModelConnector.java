@@ -39,7 +39,7 @@ public class HttpModelConnector implements IModelConnector {
     private CompletableFuture<HttpResponse<InputStream>> currentRequestFuture;
     private long currentRequestId = 0;
 
-    private volatile boolean generating = false;
+    private volatile boolean requestInProgress = false;
 
     public HttpModelConnector() {
         this.httpClient = HttpClient.newHttpClient();
@@ -67,12 +67,14 @@ public class HttpModelConnector implements IModelConnector {
 
         currentRequestFuture = httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
 
-        generating = true;
+        requestInProgress = true;
 
         currentRequestFuture
                 .thenAccept(response -> handleResponse(response, requestId, origin))
                 .exceptionally(throwable -> {
-                    generating = false;
+                    if (requestId == currentRequestId) {
+                        requestInProgress = false;
+                    }
                     Throwable cause = throwable.getCause();
                     if (cause instanceof CancellationException) {
                         return null;
@@ -107,12 +109,21 @@ public class HttpModelConnector implements IModelConnector {
                 });
     }
 
+    @Override
     public ResponseItem getNextResponse() {
         return responseQueue.poll();
     }
 
+    @Override
+    public void stop() {
+        currentRequestId++;
+        cancelCurrentRequest();
+        clearResponses();
+    }
+
+    @Override
     public boolean isGenerating() {
-        return generating || !responseQueue.isEmpty();
+        return requestInProgress || !responseQueue.isEmpty();
     }
 
     private Request buildRequest(int[][][] matrix, Map<Integer, String> palette, ModConfig.Model modelConfig) {
@@ -123,7 +134,8 @@ public class HttpModelConnector implements IModelConnector {
         request.setStart_radius(modelConfig.startRadius);
         request.setMax_iterations(modelConfig.maxIterations);
         request.setMax_blocks(modelConfig.maxBlocks);
-        request.setAir_probability_iteration_scaling(modelConfig.airProbabilityIterationScaling);
+        request.setMax_alternatives(modelConfig.maxAlternatives);
+        request.setMin_alternative_probability(modelConfig.minAlternativeProbability);
         request.setStructure(matrix);
         request.setPalette(palette);
         return request;
@@ -138,27 +150,29 @@ public class HttpModelConnector implements IModelConnector {
 
         if (response.statusCode() != 200) {
             LOGGER.error("Error sending HTTP request");
+            if (requestId == currentRequestId) {
+                requestInProgress = false;
+            }
             return;
         }
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
             String line;
-            while ((line = reader.readLine()) != null && generating) {
-                // Ignore responses from old requests
-                if (requestId != currentRequestId) {
-                    return;
-                }
+            while ((line = reader.readLine()) != null && requestId == currentRequestId) {
                 ResponseItem responseItem = gson.fromJson(line, ResponseItem.class);
                 BlockPos position = calculateResponsePosition(responseItem, origin);
-                responseItem = new ResponseItem(responseItem.getBlockState(), position.getX(), position.getY(),
-                        position.getZ());
+                responseItem = new ResponseItem(responseItem.getAlternativeNum(),
+                        responseItem.getPreviousAlternativeNum(), responseItem.getBlockState(), position.getX(),
+                        position.getY(), position.getZ());
                 responseQueue.offer(responseItem);
             }
         } catch (Exception e) {
             LOGGER.error("Error handling the streaming response", e);
         } finally {
-            generating = false;
+            if (requestId == currentRequestId) {
+                requestInProgress = false;
+            }
         }
     }
 
@@ -166,16 +180,10 @@ public class HttpModelConnector implements IModelConnector {
         if (currentRequestFuture != null) {
             currentRequestFuture.cancel(true);
         }
-        generating = false;
+        requestInProgress = false;
     }
 
     private void clearResponses() {
         responseQueue.clear();
-    }
-
-    public void stop() {
-        currentRequestId++;
-        cancelCurrentRequest();
-        clearResponses();
     }
 }

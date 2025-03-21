@@ -38,7 +38,6 @@ public final class GhostBlockRenderService {
 
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, opacity);
         RenderLayer renderLayer = RenderLayer.getTranslucent();
-        VertexConsumer vertexConsumer = immediate.getBuffer(renderLayer);
 
         // Render ghost blocks
         for (Map.Entry<BlockPos, BlockState> entry : ghostBlocks.entrySet()) {
@@ -59,6 +58,7 @@ public final class GhostBlockRenderService {
                 blockEntity.setWorld(client.world);
                 client.getBlockEntityRenderDispatcher().render(blockEntity, 0f, matrices, immediate);
             } else {
+                VertexConsumer vertexConsumer = immediate.getBuffer(renderLayer);
                 client.getBlockRenderManager().renderBlock(state, pos, client.world, matrices, vertexConsumer, false,
                         client.world.random);
             }

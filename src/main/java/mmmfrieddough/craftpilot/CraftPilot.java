@@ -11,6 +11,7 @@ import mmmfrieddough.craftpilot.model.IModelConnector;
 import mmmfrieddough.craftpilot.network.NetworkManager;
 import mmmfrieddough.craftpilot.service.CraftPilotService;
 import mmmfrieddough.craftpilot.ui.ActivityIndicatorRenderer;
+import mmmfrieddough.craftpilot.ui.AlternativesRenderer;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import mmmfrieddough.craftpilot.world.WorldManager;
 import net.fabricmc.api.ModInitializer;
@@ -29,7 +30,6 @@ public class CraftPilot implements ModInitializer {
 	private IWorldManager worldManager;
 	private IModelConnector modelConnector;
 	private CraftPilotService craftPilotService;
-	private ActivityIndicatorRenderer activityIndicator;
 
 	public CraftPilot() {
 		if (instance != null) {
@@ -48,9 +48,12 @@ public class CraftPilot implements ModInitializer {
 		craftPilotService = new CraftPilotService(modelConnector, worldManager, config);
 
 		// Initialize and register activity indicator
-		activityIndicator = new ActivityIndicatorRenderer();
+		ActivityIndicatorRenderer activityIndicator = new ActivityIndicatorRenderer();
 		HudRenderCallback.EVENT.register((drawContext, tickDelta) -> activityIndicator.render(drawContext,
-				MinecraftClient.getInstance(), modelConnector, tickDelta));
+				MinecraftClient.getInstance(), modelConnector, worldManager, tickDelta));
+		AlternativesRenderer alternativesRenderer = new AlternativesRenderer();
+		HudRenderCallback.EVENT.register((drawContext, tickDelta) -> alternativesRenderer.render(drawContext,
+				config.rendering, MinecraftClient.getInstance(), worldManager));
 
 		KeyBindings.register();
 		NetworkManager.init();
