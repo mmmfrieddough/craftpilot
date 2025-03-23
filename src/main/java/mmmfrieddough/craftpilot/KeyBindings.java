@@ -12,7 +12,7 @@ public class KeyBindings {
     private static KeyBinding selectAlternativeKeyBinding;
 
     public static void register() {
-        KeyBinding clearKey = new KeyBinding("key.craftpilot.clear", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_C,
+        KeyBinding clearKey = new KeyBinding("key.craftpilot.clear", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_Z,
                 "key.categories.craftpilot");
         clearKeyBinding = KeyBindingHelper.registerKeyBinding(clearKey);
 
