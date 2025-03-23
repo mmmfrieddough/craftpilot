@@ -15,6 +15,8 @@ public interface IWorldManager {
 
     public void clearBlockState(BlockPos pos);
 
+    public void clearBlockStateAllAlternatives(BlockPos pos);
+
     public void clearBlockStates();
 
     public Map<BlockPos, BlockState> getGhostBlocks();

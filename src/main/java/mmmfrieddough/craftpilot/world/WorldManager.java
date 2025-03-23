@@ -54,6 +54,11 @@ public class WorldManager implements IWorldManager {
     }
 
     @Override
+    public void clearBlockStateAllAlternatives(BlockPos pos) {
+        ghostBlocks.values().forEach(alternative -> alternative.remove(pos));
+    }
+
+    @Override
     public void clearBlockStates() {
         ghostBlocks.clear();
         selectedAlternativeNum = 0;

@@ -246,7 +246,7 @@ public class CraftPilotService {
 
     private void removeGhostBlocks() {
         for (BlockPos pos : ghostBlocksToRemove) {
-            worldManager.clearBlockState(pos);
+            worldManager.clearBlockStateAllAlternatives(pos);
         }
         ghostBlocksToRemove.clear();
     }
