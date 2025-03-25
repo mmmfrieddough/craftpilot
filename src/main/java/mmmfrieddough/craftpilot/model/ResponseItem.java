@@ -1,20 +1,27 @@
 package mmmfrieddough.craftpilot.model;
 
 public class ResponseItem {
-    private int alternative_num;
-    private int previous_alternative_num;
-    private String block_state;
-    private int x;
-    private int y;
-    private int z;
+    private final String type;
+    private final int alternative_num;
+    private final int previous_alternative_num;
+    private final String block_state;
+    private final int x;
+    private final int y;
+    private final int z;
 
-    public ResponseItem(int alternativeNum, int previousAlternativeNum, String blockState, int x, int y, int z) {
+    public ResponseItem(String type, int alternativeNum, int previousAlternativeNum, String blockState, int x, int y,
+            int z) {
+        this.type = type;
         this.alternative_num = alternativeNum;
         this.previous_alternative_num = previousAlternativeNum;
         this.block_state = blockState;
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+
+    public String getType() {
+        return type;
     }
 
     public int getAlternativeNum() {

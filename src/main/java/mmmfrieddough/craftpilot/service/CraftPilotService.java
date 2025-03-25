@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import mmmfrieddough.craftpilot.CraftPilotClient;
+import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import mmmfrieddough.craftpilot.model.IModelConnector;
 import mmmfrieddough.craftpilot.model.ResponseItem;
@@ -129,7 +129,7 @@ public class CraftPilotService {
             try {
                 processResponse(item);
             } catch (Exception e) {
-                CraftPilotClient.LOGGER.error("Failed to process response: {}", e.getMessage());
+                CraftPilot.LOGGER.error("Failed to process response: {}", e.getMessage());
             }
         }
     }

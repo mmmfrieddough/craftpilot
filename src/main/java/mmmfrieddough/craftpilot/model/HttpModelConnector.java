@@ -1,6 +1,7 @@
 package mmmfrieddough.craftpilot.model;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.ConnectException;
@@ -9,27 +10,27 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeoutException;
-import java.util.Map;
-
-import org.slf4j.Logger;
+import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
-import mmmfrieddough.craftpilot.CraftPilotClient;
+import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.Reference;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 
 public class HttpModelConnector implements IModelConnector {
-    private static final Logger LOGGER = CraftPilotClient.LOGGER;
-
     private final HttpClient httpClient;
     private final Gson gson;
     private final ConcurrentLinkedQueue<ResponseItem> responseQueue;
@@ -50,6 +51,8 @@ public class HttpModelConnector implements IModelConnector {
     @Override
     public void sendRequest(ModConfig.Model config, int[][][] matrix, Map<Integer, String> palette, BlockPos origin) {
         final long requestId = currentRequestId;
+
+        CraftPilot.LOGGER.info("Sending request {} to {}", requestId, config.serverUrl);
 
         Request request = buildRequest(matrix, palette, config);
         String jsonPayload = gson.toJson(request);
@@ -92,18 +95,12 @@ public class HttpModelConnector implements IModelConnector {
                                                 .withUnderline(true)
                                                 .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, setupUrl))));
 
-                        LOGGER.error("Server connection failed: {}", cause.getMessage());
+                        CraftPilot.LOGGER.error("Server connection failed: {}", cause.getMessage());
                         MinecraftClient.getInstance().player.sendMessage(message, false);
                     } else if (cause instanceof TimeoutException) {
-                        String errorMsg = "Request timed out - server may be unresponsive";
-                        LOGGER.error(errorMsg);
-                        MinecraftClient.getInstance().player
-                                .sendMessage(Text.literal(errorMsg).styled(style -> style.withColor(0xFF0000)), false);
+                        logError("Request timed out - server may be unresponsive");
                     } else {
-                        LOGGER.error("Error sending HTTP request", throwable);
-                        MinecraftClient.getInstance().player.sendMessage(
-                                Text.literal("Error sending HTTP request").styled(style -> style.withColor(0xFF0000)),
-                                false);
+                        logError("Error sending HTTP request: " + cause.getMessage());
                     }
                     return null;
                 });
@@ -126,6 +123,13 @@ public class HttpModelConnector implements IModelConnector {
         return requestInProgress || !responseQueue.isEmpty();
     }
 
+    private static void logError(String message) {
+        CraftPilot.LOGGER.error(message);
+        if (MinecraftClient.getInstance().player != null) {
+            MinecraftClient.getInstance().player.sendMessage(Text.literal(message).formatted(Formatting.RED), false);
+        }
+    }
+
     private Request buildRequest(int[][][] matrix, Map<Integer, String> palette, ModConfig.Model modelConfig) {
         Request request = new Request();
         request.setPlatform("java");
@@ -146,10 +150,19 @@ public class HttpModelConnector implements IModelConnector {
     }
 
     private void handleResponse(HttpResponse<InputStream> response, long requestId, BlockPos origin) {
-        LOGGER.info("Response status code: " + response.statusCode());
+        CraftPilot.LOGGER.info("Received response for request {} with status code {}", requestId,
+                response.statusCode());
 
         if (response.statusCode() != 200) {
-            LOGGER.error("Error sending HTTP request");
+            String errorBody = "";
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
+                errorBody = reader.lines().collect(Collectors.joining("\n"));
+            } catch (Exception e) {
+                errorBody = "Failed to read error response: " + e.getMessage();
+            }
+            logError("Request failed with status code " + response.statusCode() + ": " + errorBody);
+
             if (requestId == currentRequestId) {
                 requestInProgress = false;
             }
@@ -160,15 +173,34 @@ public class HttpModelConnector implements IModelConnector {
                 new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null && requestId == currentRequestId) {
-                ResponseItem responseItem = gson.fromJson(line, ResponseItem.class);
-                BlockPos position = calculateResponsePosition(responseItem, origin);
-                responseItem = new ResponseItem(responseItem.getAlternativeNum(),
-                        responseItem.getPreviousAlternativeNum(), responseItem.getBlockState(), position.getX(),
-                        position.getY(), position.getZ());
-                responseQueue.offer(responseItem);
+                JsonObject jsonObject = JsonParser.parseString(line).getAsJsonObject();
+
+                // Check message type
+                String type = jsonObject.get("type").getAsString();
+
+                if ("block".equals(type)) {
+                    // Process block placement
+                    ResponseItem responseItem = gson.fromJson(jsonObject, ResponseItem.class);
+                    BlockPos position = calculateResponsePosition(responseItem, origin);
+                    responseItem = new ResponseItem(responseItem.getType(), responseItem.getAlternativeNum(),
+                            responseItem.getPreviousAlternativeNum(), responseItem.getBlockState(), position.getX(),
+                            position.getY(), position.getZ());
+                    responseQueue.offer(responseItem);
+                } else if ("complete".equals(type)) {
+                    CraftPilot.LOGGER.info("Request {} completed", requestId);
+                    break;
+                } else if ("error".equals(type)) {
+                    // Process error message
+                    logError("Request failed: " + jsonObject.get("detail").getAsString());
+                    break;
+                } else {
+                    logError("Received unknown message type: " + type);
+                }
             }
+        } catch (IOException e) {
+            logError("Server connection closed unexpectedly");
         } catch (Exception e) {
-            LOGGER.error("Error handling the streaming response", e);
+            logError("Error handling the streaming response: " + e.getMessage());
         } finally {
             if (requestId == currentRequestId) {
                 requestInProgress = false;
@@ -177,6 +209,7 @@ public class HttpModelConnector implements IModelConnector {
     }
 
     private void cancelCurrentRequest() {
+        CraftPilot.LOGGER.info("Cancelling current request");
         if (currentRequestFuture != null) {
             currentRequestFuture.cancel(true);
         }

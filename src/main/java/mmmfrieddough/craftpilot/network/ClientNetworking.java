@@ -1,6 +1,6 @@
 package mmmfrieddough.craftpilot.network;
 
-import mmmfrieddough.craftpilot.CraftPilotClient;
+import mmmfrieddough.craftpilot.CraftPilot;
 import mmmfrieddough.craftpilot.network.payloads.ModHandshakePayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -19,9 +19,9 @@ public class ClientNetworking {
                 // We don't actually need to send the packet - just checking if the channel
                 // exists
                 modOnServer = true;
-                CraftPilotClient.LOGGER.info("CraftPilot detected on server");
+                CraftPilot.LOGGER.info("CraftPilot detected on server");
             } else {
-                CraftPilotClient.LOGGER.warn("CraftPilot not detected on server");
+                CraftPilot.LOGGER.warn("CraftPilot not detected on server");
             }
         });
 
