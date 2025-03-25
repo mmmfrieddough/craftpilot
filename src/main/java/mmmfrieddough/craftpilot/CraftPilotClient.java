@@ -1,8 +1,5 @@
 package mmmfrieddough.craftpilot;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 import mmmfrieddough.craftpilot.config.ModConfig;
@@ -25,8 +22,6 @@ import net.minecraft.client.world.ClientWorld;
 
 @Environment(EnvType.CLIENT)
 public class CraftPilotClient implements ClientModInitializer {
-    public static final Logger LOGGER = LoggerFactory.getLogger(Reference.MOD_ID);
-
     private static CraftPilotClient instance;
 
     private ModConfig config;
@@ -43,7 +38,7 @@ public class CraftPilotClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        LOGGER.info("Initializing Craftpilot client");
+        CraftPilot.LOGGER.info("Initializing Craftpilot client");
 
         initializeConfig();
         worldManager = new WorldManager();
@@ -63,7 +58,7 @@ public class CraftPilotClient implements ClientModInitializer {
 
         registerCallbacks();
 
-        LOGGER.info("Craftpilot client initialized");
+        CraftPilot.LOGGER.info("Craftpilot client initialized");
     }
 
     private void initializeConfig() {
@@ -85,12 +80,12 @@ public class CraftPilotClient implements ClientModInitializer {
         craftPilotService.processResponses();
 
         if (KeyBindings.getClearKeyBinding().wasPressed()) {
-            LOGGER.info("Clearing suggestions");
+            CraftPilot.LOGGER.info("Clearing suggestions");
             craftPilotService.clearAll();
         }
 
         if (KeyBindings.getTriggerKeyBinding().wasPressed()) {
-            LOGGER.info("Triggering suggestions");
+            CraftPilot.LOGGER.info("Triggering suggestions");
             craftPilotService.triggerSuggestions(client);
         }
 

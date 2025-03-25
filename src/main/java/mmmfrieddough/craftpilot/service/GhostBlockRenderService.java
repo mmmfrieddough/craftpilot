@@ -79,7 +79,6 @@ public final class GhostBlockRenderService {
         double cameraY = camera.getPos().y;
         double cameraZ = camera.getPos().z;
 
-        // Replace the target calculation with cached value
         BlockPos targetedBlock = GhostBlockService.getCurrentTargetPos();
 
         RenderSystem.enableDepthTest();
