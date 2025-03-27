@@ -3,6 +3,9 @@ package mmmfrieddough.craftpilot.model;
 import java.util.Map;
 
 public class Request {
+    private String model_type;
+    private String model_version;
+    private String inference_device;
     private String platform;
     private int version_number;
     private double temperature;
@@ -13,6 +16,30 @@ public class Request {
     private float min_alternative_probability;
     private int[][][] structure;
     private Map<Integer, String> palette;
+
+    public String getModel_type() {
+        return model_type;
+    }
+
+    public void setModel_type(String modelType) {
+        this.model_type = modelType;
+    }
+
+    public String getModel_version() {
+        return model_version;
+    }
+
+    public void setModel_version(String modelVersion) {
+        this.model_version = modelVersion;
+    }
+
+    public String getInference_device() {
+        return inference_device;
+    }
+
+    public void setInference_device(String inferenceDevice) {
+        this.inference_device = inferenceDevice;
+    }
 
     public String getPlatform() {
         return platform;
