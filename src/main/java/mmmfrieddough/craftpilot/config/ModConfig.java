@@ -5,6 +5,8 @@ import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry.BoundedDiscrete;
 import me.shedaniel.autoconfig.annotation.ConfigEntry.Category;
 import me.shedaniel.autoconfig.annotation.ConfigEntry.ColorPicker;
+import me.shedaniel.autoconfig.annotation.ConfigEntry.Gui.EnumHandler;
+import me.shedaniel.autoconfig.annotation.ConfigEntry.Gui.EnumHandler.EnumDisplayOption;
 import me.shedaniel.autoconfig.annotation.ConfigEntry.Gui.Tooltip;
 import me.shedaniel.autoconfig.annotation.ConfigEntry.Gui.TransitiveObject;
 
@@ -35,8 +37,50 @@ public class ModConfig implements ConfigData {
     public Model model = new Model();
 
     public static class Model {
+        public enum ModelType {
+            DEFAULT("default"),
+            IRON("iron"),
+            DIAMOND("diamond");
+
+            private final String value;
+
+            ModelType(String value) {
+                this.value = value;
+            }
+
+            public String getValue() {
+                return value;
+            }
+        }
+
+        public enum InferenceDevice {
+            DEFAULT(""),
+            AUTO("auto"),
+            CPU("cpu"),
+            CUDA("cuda"),
+            MPS("mps");
+
+            private final String value;
+
+            InferenceDevice(String value) {
+                this.value = value;
+            }
+
+            public String getValue() {
+                return value;
+            }
+        }
+
         @Tooltip
         public String serverUrl = "http://127.0.0.1:8000/complete-structure/";
+        @Tooltip
+        @EnumHandler(option = EnumDisplayOption.BUTTON)
+        public ModelType modelType = ModelType.DEFAULT;
+        @Tooltip
+        public String modelVersion = "";
+        @Tooltip
+        @EnumHandler(option = EnumDisplayOption.BUTTON)
+        public InferenceDevice inferenceDevice = InferenceDevice.DEFAULT;
         @Tooltip
         public float temperature = 0.7f;
         @Tooltip

@@ -132,6 +132,9 @@ public class HttpModelConnector implements IModelConnector {
 
     private Request buildRequest(int[][][] matrix, Map<Integer, String> palette, ModConfig.Model modelConfig) {
         Request request = new Request();
+        request.setModel_type(modelConfig.modelType.getValue());
+        request.setModel_version(modelConfig.modelVersion);
+        request.setInference_device(modelConfig.inferenceDevice.getValue());
         request.setPlatform("java");
         request.setVersion_number(Reference.MC_DATA_VERSION);
         request.setTemperature(modelConfig.temperature);
@@ -154,7 +157,7 @@ public class HttpModelConnector implements IModelConnector {
                 response.statusCode());
 
         if (response.statusCode() != 200) {
-            String errorBody = "";
+            String errorBody;
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
                 errorBody = reader.lines().collect(Collectors.joining("\n"));
