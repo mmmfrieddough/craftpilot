@@ -14,8 +14,9 @@ public class Request {
     private int max_blocks;
     private int max_alternatives;
     private float min_alternative_probability;
-    private int[][][] structure;
+    private boolean ignore_replaceable_blocks;
     private Map<Integer, String> palette;
+    private int[][][] structure;
 
     public String getModel_type() {
         return model_type;
@@ -105,12 +106,12 @@ public class Request {
         this.min_alternative_probability = minAlternativeProbability;
     }
 
-    public int[][][] getStructure() {
-        return structure;
+    public boolean isIgnore_replaceable_blocks() {
+        return ignore_replaceable_blocks;
     }
 
-    public void setStructure(int[][][] structure) {
-        this.structure = structure;
+    public void setIgnore_replaceable_blocks(boolean ignoreReplaceableBlocks) {
+        this.ignore_replaceable_blocks = ignoreReplaceableBlocks;
     }
 
     public Map<Integer, String> getPalette() {
@@ -119,5 +120,13 @@ public class Request {
 
     public void setPalette(Map<Integer, String> palette) {
         this.palette = palette;
+    }
+
+    public int[][][] getStructure() {
+        return structure;
+    }
+
+    public void setStructure(int[][][] structure) {
+        this.structure = structure;
     }
 }
