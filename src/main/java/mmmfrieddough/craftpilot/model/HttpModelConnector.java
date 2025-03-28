@@ -143,8 +143,9 @@ public class HttpModelConnector implements IModelConnector {
         request.setMax_blocks(modelConfig.maxBlocks);
         request.setMax_alternatives(modelConfig.maxAlternatives);
         request.setMin_alternative_probability(modelConfig.minAlternativeProbability);
-        request.setStructure(matrix);
+        request.setIgnore_replaceable_blocks(modelConfig.ignoreReplaceableBlocks);
         request.setPalette(palette);
+        request.setStructure(matrix);
         return request;
     }
 

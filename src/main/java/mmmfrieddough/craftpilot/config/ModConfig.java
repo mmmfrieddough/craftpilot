@@ -95,6 +95,8 @@ public class ModConfig implements ConfigData {
         public int maxAlternatives = 5;
         @Tooltip
         public float minAlternativeProbability = 0.3f;
+        @Tooltip
+        public boolean ignoreReplaceableBlocks = true;
     }
 
     @Category("Rendering")
