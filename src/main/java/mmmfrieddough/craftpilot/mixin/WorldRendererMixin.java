@@ -13,6 +13,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 
 import mmmfrieddough.craftpilot.CraftPilotClient;
 import mmmfrieddough.craftpilot.config.ModConfig;
+import mmmfrieddough.craftpilot.service.CraftPilotService;
 import mmmfrieddough.craftpilot.service.GhostBlockRenderService;
 import mmmfrieddough.craftpilot.service.GhostBlockService;
 import mmmfrieddough.craftpilot.world.IWorldManager;
@@ -27,7 +28,7 @@ import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.ObjectAllocator;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.profiler.Profilers;
 
@@ -52,8 +53,13 @@ public class WorldRendererMixin {
         Profilers.get().push("craftpilot_update_targetted_block");
 
         if (client.player != null) {
-            double reach = client.player.getAttributeValue(EntityAttributes.BLOCK_INTERACTION_RANGE);
-            GhostBlockService.updateCurrentTarget(worldManager, camera, reach, client.crosshairTarget);
+            Entity cameraEntity = client.getCameraEntity();
+            double blockInteractionRange = config.general.enableInfiniteReach ? 10000.0D
+                    : client.player.getBlockInteractionRange();
+            double enttityInteractionRange = client.player.getEntityInteractionRange();
+            HitResult vanillaTarget = CraftPilotService.findCrosshairTarget(cameraEntity, blockInteractionRange,
+                    enttityInteractionRange, 1.0F);
+            GhostBlockService.updateCurrentTarget(worldManager, camera, blockInteractionRange, vanillaTarget);
         }
 
         Profilers.get().pop();

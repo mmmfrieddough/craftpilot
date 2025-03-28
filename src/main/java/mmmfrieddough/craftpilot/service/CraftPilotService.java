@@ -16,10 +16,19 @@ import mmmfrieddough.craftpilot.world.BlockStateHelper;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.projectile.ProjectileUtil;
+import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class CraftPilotService {
@@ -228,6 +237,41 @@ public class CraftPilotService {
         resetCounters();
     }
 
+    private static HitResult ensureTargetInRange(HitResult hitResult, Vec3d cameraPos, double interactionRange) {
+        Vec3d vec3d = hitResult.getPos();
+        if (!vec3d.isInRange(cameraPos, interactionRange)) {
+            Vec3d vec3d2 = hitResult.getPos();
+            Direction direction = Direction.getFacing(vec3d2.x - cameraPos.x, vec3d2.y - cameraPos.y,
+                    vec3d2.z - cameraPos.z);
+            return BlockHitResult.createMissed(vec3d2, direction, BlockPos.ofFloored(vec3d2));
+        } else {
+            return hitResult;
+        }
+    }
+
+    public static HitResult findCrosshairTarget(Entity camera, double blockInteractionRange,
+            double entityInteractionRange,
+            float tickDelta) {
+        double d = Math.max(blockInteractionRange, entityInteractionRange);
+        double e = MathHelper.square(d);
+        Vec3d vec3d = camera.getCameraPosVec(tickDelta);
+        HitResult hitResult = camera.raycast(d, tickDelta, false);
+        double f = hitResult.getPos().squaredDistanceTo(vec3d);
+        if (hitResult.getType() != HitResult.Type.MISS) {
+            e = f;
+            d = Math.sqrt(f);
+        }
+
+        Vec3d vec3d2 = camera.getRotationVec(tickDelta);
+        Vec3d vec3d3 = vec3d.add(vec3d2.x * d, vec3d2.y * d, vec3d2.z * d);
+        Box box = camera.getBoundingBox().stretch(vec3d2.multiply(d)).expand(1.0, 1.0, 1.0);
+        EntityHitResult entityHitResult = ProjectileUtil.raycast(camera, vec3d, vec3d3, box, EntityPredicates.CAN_HIT,
+                e);
+        return entityHitResult != null && entityHitResult.getPos().squaredDistanceTo(vec3d) < f
+                ? ensureTargetInRange(entityHitResult, vec3d, entityInteractionRange)
+                : ensureTargetInRange(hitResult, vec3d, blockInteractionRange);
+    }
+
     private BlockPos getTargetBlockPosition(MinecraftClient client) {
         // First check for ghost block target
         GhostBlockTarget target = GhostBlockService.getCurrentTarget();
@@ -236,7 +280,12 @@ public class CraftPilotService {
         }
 
         // Fall back to regular crosshair target
-        BlockHitResult hitResult = (BlockHitResult) client.crosshairTarget;
+        Entity cameraEntity = client.getCameraEntity();
+        double blockInteractionRange = config.general.enableInfiniteReach ? 10000.0D
+                : client.player.getBlockInteractionRange();
+        double enttityInteractionRange = client.player.getEntityInteractionRange();
+        BlockHitResult hitResult = (BlockHitResult) findCrosshairTarget(cameraEntity, blockInteractionRange,
+                enttityInteractionRange, 1.0F);
         if (hitResult.getType() == BlockHitResult.Type.BLOCK) {
             return hitResult.getBlockPos();
         }

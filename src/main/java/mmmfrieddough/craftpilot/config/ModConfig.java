@@ -30,6 +30,8 @@ public class ModConfig implements ConfigData {
         public boolean enableEasyPlace = true;
         @Tooltip
         public int acceptAllMaxIterations = 5;
+        @Tooltip
+        public boolean enableInfiniteReach = false;
     }
 
     @Category("Model")
