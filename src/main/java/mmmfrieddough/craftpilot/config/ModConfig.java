@@ -84,7 +84,7 @@ public class ModConfig implements ConfigData {
         @EnumHandler(option = EnumDisplayOption.BUTTON)
         public InferenceDevice inferenceDevice = InferenceDevice.DEFAULT;
         @Tooltip
-        public float temperature = 0.7f;
+        public float temperature = 1.0f;
         @Tooltip
         public int startRadius = 1;
         @Tooltip
@@ -92,7 +92,7 @@ public class ModConfig implements ConfigData {
         @Tooltip
         public int maxBlocks = 20;
         @Tooltip
-        public int maxAlternatives = 5;
+        public int maxAlternatives = 3;
         @Tooltip
         public float minAlternativeProbability = 0.3f;
         @Tooltip
