@@ -31,6 +31,8 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 
 public class HttpModelConnector implements IModelConnector {
+    private static final String SETUP_URL = "https://github.com/mmmfrieddough/craftpilot#setup";
+
     private final HttpClient httpClient;
     private final Gson gson;
     private final ConcurrentLinkedQueue<ResponseItem> responseQueue;
@@ -83,17 +85,13 @@ public class HttpModelConnector implements IModelConnector {
                         return null;
                     }
                     if (cause instanceof ConnectException) {
-                        String setupUrl = "https://github.com/mmmfrieddough/craftpilot#setup";
-                        Text message = Text
-                                .literal("URL " + config.serverUrl + " appears to be offline or unreachable.\n")
+                        logError("URL " + config.serverUrl + " appears to be offline or unreachable.");
+                        Text message = Text.literal("Make sure you've installed and started the companion program!\n")
                                 .styled(style -> style.withColor(0xFF0000))
-                                .append(Text.literal("Make sure you've installed and started the companion program!\n")
-                                        .styled(style -> style.withColor(0xFF0000)))
                                 .append(Text.literal("Click here for setup instructions")
-                                        .styled(style -> style
-                                                .withColor(0xFF0000)
-                                                .withUnderline(true)
-                                                .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, setupUrl))));
+                                        .styled(style -> style.withColor(0xFF0000).withUnderline(true)
+                                                .withClickEvent(
+                                                        new ClickEvent(ClickEvent.Action.OPEN_URL, SETUP_URL))));
 
                         CraftPilot.LOGGER.error("Server connection failed: {}", cause.getMessage());
                         MinecraftClient.getInstance().player.sendMessage(message, false);
@@ -166,6 +164,15 @@ public class HttpModelConnector implements IModelConnector {
                 errorBody = "Failed to read error response: " + e.getMessage();
             }
             logError("Request failed with status code " + response.statusCode() + ": " + errorBody);
+
+            if (response.statusCode() == 422) {
+                Text message = Text.literal("Make sure you're using the latest version of the companion program!\n")
+                        .styled(style -> style.withColor(0xFF0000))
+                        .append(Text.literal("Click here for setup instructions")
+                                .styled(style -> style.withColor(0xFF0000).withUnderline(true)
+                                        .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, SETUP_URL))));
+                MinecraftClient.getInstance().player.sendMessage(message, false);
+            }
 
             if (requestId == currentRequestId) {
                 requestInProgress = false;
