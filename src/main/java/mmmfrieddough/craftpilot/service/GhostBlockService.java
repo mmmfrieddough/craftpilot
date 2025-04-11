@@ -32,6 +32,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.GameMode;
+import net.minecraft.world.World;
 
 public final class GhostBlockService {
     public record GhostBlockTarget(BlockPos pos, BlockState state) {
@@ -213,8 +214,8 @@ public final class GhostBlockService {
      * @return The position of the nearest ghost block hit by the raycast, or null
      *         if none found
      */
-    public static BlockPos findTargetedGhostBlock(Map<BlockPos, BlockState> ghostBlocks, Vec3d cameraPos, Vec3d lookVec,
-            double reach, HitResult vanillaTarget) {
+    public static BlockPos findTargetedGhostBlock(World world, Map<BlockPos, BlockState> ghostBlocks,
+            Vec3d cameraPos, Vec3d lookVec, double reach, HitResult vanillaTarget) {
         if (ghostBlocks.isEmpty()) {
             return null;
         }
@@ -229,7 +230,7 @@ public final class GhostBlockService {
 
         for (BlockPos pos : ghostBlocks.keySet()) {
             BlockState state = ghostBlocks.get(pos);
-            VoxelShape shape = state.getOutlineShape(null, pos);
+            VoxelShape shape = state.getOutlineShape(world, pos);
             BlockHitResult hitResult = shape.raycast(cameraPos, endPos, pos);
 
             if (hitResult != null && hitResult.getType() != HitResult.Type.MISS) {
@@ -294,14 +295,14 @@ public final class GhostBlockService {
      *         block,
      *         or null if no ghost block is being targeted
      */
-    private static GhostBlockTarget getGhostBlockTarget(IWorldManager worldManager, Camera camera, double reach,
-            HitResult vanillaTarget) {
+    private static GhostBlockTarget getGhostBlockTarget(World world, IWorldManager worldManager, Camera camera,
+            double reach, HitResult vanillaTarget) {
         Vec3d cameraPos = camera.getPos();
         Vec3d rotationVec = camera.getFocusedEntity().getRotationVec(1.0f);
         Map<BlockPos, BlockState> ghostBlocks = worldManager.getGhostBlocks();
 
         // Find nearest ghost block using ray casting
-        BlockPos targetPos = findTargetedGhostBlock(ghostBlocks, cameraPos, rotationVec, reach, vanillaTarget);
+        BlockPos targetPos = findTargetedGhostBlock(world, ghostBlocks, cameraPos, rotationVec, reach, vanillaTarget);
 
         if (targetPos == null) {
             return null;
@@ -311,9 +312,9 @@ public final class GhostBlockService {
         return new GhostBlockTarget(targetPos, ghostState);
     }
 
-    public static void updateCurrentTarget(IWorldManager worldManager, Camera camera, double reach,
+    public static void updateCurrentTarget(World world, IWorldManager worldManager, Camera camera, double reach,
             HitResult vanillaTarget) {
-        currentTarget = getGhostBlockTarget(worldManager, camera, reach, vanillaTarget);
+        currentTarget = getGhostBlockTarget(world, worldManager, camera, reach, vanillaTarget);
     }
 
     public static GhostBlockTarget getCurrentTarget() {

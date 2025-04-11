@@ -59,7 +59,8 @@ public class WorldRendererMixin {
             double enttityInteractionRange = client.player.getEntityInteractionRange();
             HitResult vanillaTarget = CraftPilotService.findCrosshairTarget(cameraEntity, blockInteractionRange,
                     enttityInteractionRange, 1.0F);
-            GhostBlockService.updateCurrentTarget(worldManager, camera, blockInteractionRange, vanillaTarget);
+            GhostBlockService.updateCurrentTarget(client.world, worldManager, camera, blockInteractionRange,
+                    vanillaTarget);
         }
 
         Profilers.get().pop();
