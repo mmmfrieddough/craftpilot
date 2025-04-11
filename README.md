@@ -13,7 +13,7 @@
 Craftpilot is your personal building assistant in Minecraft. As you build, it provides relevant suggestions through an easy-to-use overlay. Whether you're seeking inspiration for new structures or struggling with complex details, Craftpilot helps bring your creative vision to life. The assistant supports a wide variety of building styles and block palettes, making it a versatile tool for any Minecraft builder.
 
 <p align="center">
-  <img src="showcase1.gif" alt="Craftpilot Main Demo" width="600">
+  <img src="showcase.gif" alt="Craftpilot Main Demo" width="600">
 </p>
 
 ## Setup
@@ -36,11 +36,19 @@ Craftpilot requires a companion program that runs the ML model. Here's how to ge
 
 1. **Triggering Suggestions**
 
+<p align="center">
+  <img src="triggering.gif" alt="Triggering" width="600">
+</p>
+
    - Place any block to begin a new build or continue an existing one. Suggestions will automatically appear.
    - You can also manually trigger the suggestions without placing any block by pressing the trigger key (default R).
    - Craftpilot will display suggested blocks as a transparent overlay.
 
 2. **Working with Suggestions**
+
+<p align="center">
+  <img src="building.gif" alt="Building" width="600">
+</p>
 
    - Accept suggestions by placing blocks where they're shown.
    - With easy place mode (enabled by default) you can place blocks exactly as they appear in the suggestions, without needing to worry about orientation or adjacent blocks. Simply right-click on the suggested block to place it in the correct orientation and state. In creative mode, you can even place blocks with an empty hand.
@@ -57,6 +65,10 @@ Craftpilot requires a companion program that runs the ML model. Here's how to ge
    - This helps accommodate support blocks and minor adjustments.
 
 4. **Selecting Alternatives**
+
+<p align="center">
+  <img src="alternatives.gif" alt="Alternatives" width="600">
+</p>
 
    - In addition to the main suggestions, several alternatives can also be generated. These can be seen as boxes next to the Craftpilot logo on the top right of the screen.
    - Hold the select alternative key (default left alt) and use the scroll wheel or the hotbar keys to choose an option.
