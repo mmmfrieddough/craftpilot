@@ -83,7 +83,6 @@ public final class GhostBlockRenderService {
 
         RenderSystem.enableDepthTest();
         RenderSystem.depthFunc(GL11.GL_LESS);
-        RenderSystem.lineWidth(2.0f);
 
         // First pass: render non-targeted blocks
         RenderSystem.polygonOffset(-2.0f, -8.0f);
@@ -98,10 +97,8 @@ public final class GhostBlockRenderService {
             BlockPos pos = entry.getKey();
             if (!pos.equals(targetedBlock) && pos.isWithinDistance(cameraPos, renderDistance)) {
                 VoxelShape shape = entry.getValue().getOutlineShape(client.world, pos);
-                shape.forEachBox((minX, minY, minZ, maxX, maxY, maxZ) -> {
-                    VertexRendering.drawOutline(matrices, normalVertices, shape, pos.getX() - cameraX,
-                            pos.getY() - cameraY, pos.getZ() - cameraZ, normalColor);
-                });
+                VertexRendering.drawOutline(matrices, normalVertices, shape, pos.getX() - cameraX, pos.getY() - cameraY,
+                        pos.getZ() - cameraZ, normalColor);
             }
         }
 
@@ -116,12 +113,10 @@ public final class GhostBlockRenderService {
             RenderSystem.polygonOffset(-3.0f, -10.0f);
 
             BlockState state = ghostBlocks.get(targetedBlock);
-            VoxelShape shape = state.getOutlineShape(client.world, targetedBlock);
             int targetedColor = (alpha << 24) | config.targetedOutlineColor;
-            shape.forEachBox((minX, minY, minZ, maxX, maxY, maxZ) -> {
-                VertexRendering.drawOutline(matrices, targetedVertices, shape, targetedBlock.getX() - cameraX,
-                        targetedBlock.getY() - cameraY, targetedBlock.getZ() - cameraZ, targetedColor);
-            });
+            VoxelShape shape = state.getOutlineShape(client.world, targetedBlock);
+            VertexRendering.drawOutline(matrices, targetedVertices, shape, targetedBlock.getX() - cameraX,
+                    targetedBlock.getY() - cameraY, targetedBlock.getZ() - cameraZ, targetedColor);
 
             immediate.draw();
         }
