@@ -283,9 +283,9 @@ public class CraftPilotService {
         Entity cameraEntity = client.getCameraEntity();
         double blockInteractionRange = config.general.enableInfiniteReach ? 10000.0D
                 : client.player.getBlockInteractionRange();
-        double enttityInteractionRange = client.player.getEntityInteractionRange();
+        double entityInteractionRange = client.player.getEntityInteractionRange();
         BlockHitResult hitResult = (BlockHitResult) findCrosshairTarget(cameraEntity, blockInteractionRange,
-                enttityInteractionRange, 1.0F);
+                entityInteractionRange, 1.0F);
         if (hitResult.getType() == BlockHitResult.Type.BLOCK) {
             return hitResult.getBlockPos();
         }
