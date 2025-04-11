@@ -61,7 +61,7 @@ public class ServerNetworking {
                     player.updateLastActionTime();
                     int i = player.getWorld().getTopYInclusive();
                     if (blockPos.getY() <= i) {
-                        if (world.canPlayerModifyAt(player, blockPos)) {
+                        if (world.canEntityModifyAt(player, blockPos)) {
                             // Encode the position in the block hit result
                             BlockHitResult blockHitResult = new BlockHitResult(player.getPos(),
                                     player.getHorizontalFacing(), blockPos, false);

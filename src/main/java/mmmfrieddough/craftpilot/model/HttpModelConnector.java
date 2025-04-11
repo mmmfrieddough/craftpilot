@@ -32,6 +32,7 @@ import net.minecraft.util.math.BlockPos;
 
 public class HttpModelConnector implements IModelConnector {
     private static final String SETUP_URL = "https://github.com/mmmfrieddough/craftpilot#setup";
+    private static final URI SETUP_URI = URI.create(SETUP_URL);
 
     private final HttpClient httpClient;
     private final Gson gson;
@@ -90,8 +91,7 @@ public class HttpModelConnector implements IModelConnector {
                                 .styled(style -> style.withColor(0xFF0000))
                                 .append(Text.literal("Click here for setup instructions")
                                         .styled(style -> style.withColor(0xFF0000).withUnderline(true)
-                                                .withClickEvent(
-                                                        new ClickEvent(ClickEvent.Action.OPEN_URL, SETUP_URL))));
+                                                .withClickEvent(new ClickEvent.OpenUrl(SETUP_URI))));
 
                         CraftPilot.LOGGER.error("Server connection failed: {}", cause.getMessage());
                         MinecraftClient.getInstance().player.sendMessage(message, false);
@@ -170,7 +170,7 @@ public class HttpModelConnector implements IModelConnector {
                         .styled(style -> style.withColor(0xFF0000))
                         .append(Text.literal("Click here for setup instructions")
                                 .styled(style -> style.withColor(0xFF0000).withUnderline(true)
-                                        .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, SETUP_URL))));
+                                        .withClickEvent(new ClickEvent.OpenUrl(SETUP_URI))));
                 MinecraftClient.getInstance().player.sendMessage(message, false);
             }
 
