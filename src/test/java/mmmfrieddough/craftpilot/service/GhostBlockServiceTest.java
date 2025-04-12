@@ -195,7 +195,7 @@ class GhostBlockServiceTest {
                     screenHandler);
 
             assertTrue(result);
-            assertEquals(0, inventory.selectedSlot);
+            assertEquals(0, inventory.getSelectedSlot());
             verify(inventory, never()).swapStackWithHotbar(any());
             verify(inventory, never()).swapSlotWithHotbar(anyInt());
         }

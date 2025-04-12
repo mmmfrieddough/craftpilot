@@ -9,8 +9,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-
 import mmmfrieddough.craftpilot.CraftPilotClient;
 import mmmfrieddough.craftpilot.config.ModConfig;
 import mmmfrieddough.craftpilot.service.CraftPilotService;
@@ -85,9 +83,6 @@ public class WorldRendererMixin {
         // Create vertex consumer once
         VertexConsumerProvider.Immediate immediate = client.getBufferBuilders().getEntityVertexConsumers();
 
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-
         // Create a new MatrixStack for our transformations
         MatrixStack matrices = new MatrixStack();
         matrices.push();
@@ -102,9 +97,6 @@ public class WorldRendererMixin {
                 matrices, immediate);
 
         matrices.pop();
-
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-        RenderSystem.disableBlend();
 
         Profilers.get().pop();
     }

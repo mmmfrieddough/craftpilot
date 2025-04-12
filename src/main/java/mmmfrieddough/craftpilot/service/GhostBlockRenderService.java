@@ -2,8 +2,6 @@ package mmmfrieddough.craftpilot.service;
 
 import java.util.Map;
 
-import org.lwjgl.opengl.GL11;
-
 import com.mojang.blaze3d.systems.RenderSystem;
 
 import mmmfrieddough.craftpilot.config.ModConfig.Rendering;
@@ -17,6 +15,8 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.VertexRendering;
+import net.minecraft.client.render.block.BlockRenderManager;
+import net.minecraft.client.render.model.BlockStateModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.shape.VoxelShape;
@@ -35,6 +35,8 @@ public final class GhostBlockRenderService {
         double cameraX = camera.getPos().x;
         double cameraY = camera.getPos().y;
         double cameraZ = camera.getPos().z;
+
+        BlockRenderManager blockRenderManager = client.getBlockRenderManager();
 
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, opacity);
         RenderLayer renderLayer = RenderLayer.getTranslucent();
@@ -58,9 +60,10 @@ public final class GhostBlockRenderService {
                 blockEntity.setWorld(client.world);
                 client.getBlockEntityRenderDispatcher().render(blockEntity, 0f, matrices, immediate);
             } else {
+                BlockStateModel blockStateModel = blockRenderManager.getModel(state);
                 VertexConsumer vertexConsumer = immediate.getBuffer(renderLayer);
                 client.getBlockRenderManager().renderBlock(state, pos, client.world, matrices, vertexConsumer, false,
-                        client.world.random);
+                        blockStateModel.getParts(client.world.random));
             }
 
             matrices.pop();
@@ -81,13 +84,6 @@ public final class GhostBlockRenderService {
 
         BlockPos targetedBlock = GhostBlockService.getCurrentTargetPos();
 
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthFunc(GL11.GL_LESS);
-
-        // First pass: render non-targeted blocks
-        RenderSystem.polygonOffset(-2.0f, -8.0f);
-        RenderSystem.enablePolygonOffset();
-
         VertexConsumer normalVertices = immediate.getBuffer(RenderLayer.getLines());
 
         int alpha = (int) (config.blockOutlineOpacity * 255.0f);
@@ -106,11 +102,7 @@ public final class GhostBlockRenderService {
 
         // Second pass: render targeted block
         if (targetedBlock != null && targetedBlock.isWithinDistance(cameraPos, renderDistance)) {
-            // Get fresh buffer for second pass
             VertexConsumer targetedVertices = immediate.getBuffer(RenderLayer.getLines());
-
-            // Use less offset to render on top
-            RenderSystem.polygonOffset(-3.0f, -10.0f);
 
             BlockState state = ghostBlocks.get(targetedBlock);
             int targetedColor = (alpha << 24) | config.targetedOutlineColor;
@@ -120,9 +112,5 @@ public final class GhostBlockRenderService {
 
             immediate.draw();
         }
-
-        RenderSystem.polygonOffset(0.0f, 0.0f);
-        RenderSystem.disablePolygonOffset();
-        RenderSystem.depthFunc(GL11.GL_LEQUAL);
     }
 }
