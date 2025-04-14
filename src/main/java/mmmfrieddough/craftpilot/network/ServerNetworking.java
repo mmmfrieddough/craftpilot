@@ -78,8 +78,7 @@ public class ServerNetworking {
                                 Criteria.ANY_BLOCK_USE.trigger(player, blockPos, itemStack.copy());
                             }
 
-                            if (actionResult instanceof ActionResult.Success) {
-                                ActionResult.Success success = (ActionResult.Success) actionResult;
+                            if (actionResult instanceof ActionResult.Success success) {
                                 if (success.swingSource() == SwingSource.SERVER) {
                                     player.swingHand(hand, true);
                                 }
