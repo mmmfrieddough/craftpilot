@@ -70,6 +70,9 @@ public final class GhostBlockRenderService {
         }
 
         immediate.draw();
+
+        // Reset shader color
+        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
     /**
