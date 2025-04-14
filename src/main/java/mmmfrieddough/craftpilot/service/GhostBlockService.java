@@ -21,6 +21,7 @@ import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.screen.sync.ItemStackHash;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
@@ -189,8 +190,7 @@ public final class GhostBlockService {
             // Play animation
             client.player.swingHand(hand);
             int previousCount = itemStack.getCount();
-            if (!itemStack.isEmpty() && (itemStack.getCount() != previousCount
-                    || client.interactionManager.hasCreativeInventory())) {
+            if (!itemStack.isEmpty() && (itemStack.getCount() != previousCount || client.player.isInCreativeMode())) {
                 client.gameRenderer.firstPersonRenderer.resetEquipProgress(hand);
             }
 
@@ -266,21 +266,22 @@ public final class GhostBlockService {
                 // Check if item is in hotbar
                 if (PlayerInventory.isValidHotbarIndex(i)) {
                     // Select the slot
-                    playerInventory.selectedSlot = i;
+                    playerInventory.setSelectedSlot(i);
                 } else {
                     // Swap the item with the slot
                     playerInventory.swapSlotWithHotbar(i);
                     networkHandler.sendPacket(new ClickSlotC2SPacket(screenHandler.syncId, screenHandler.getRevision(),
-                            i, playerInventory.selectedSlot, SlotActionType.SWAP, stack, Int2ObjectMaps.emptyMap()));
+                            (short) i, (byte) playerInventory.getSelectedSlot(), SlotActionType.SWAP,
+                            Int2ObjectMaps.emptyMap(), ItemStackHash.fromItemStack(stack, null)));
                 }
             } else if (creativeMode) {
                 // Add item to inventory
                 playerInventory.swapStackWithHotbar(stack);
                 stack.setBobbingAnimationTime(5);
-                networkHandler
-                        .sendPacket(new CreativeInventoryActionC2SPacket(36 + playerInventory.selectedSlot, stack));
+                networkHandler.sendPacket(
+                        new CreativeInventoryActionC2SPacket(36 + playerInventory.getSelectedSlot(), stack));
             }
-            networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(playerInventory.selectedSlot));
+            networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(playerInventory.getSelectedSlot()));
         }
     }
 

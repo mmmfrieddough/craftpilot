@@ -61,7 +61,7 @@ public class ServerNetworking {
                     player.updateLastActionTime();
                     int i = player.getWorld().getTopYInclusive();
                     if (blockPos.getY() <= i) {
-                        if (world.canPlayerModifyAt(player, blockPos)) {
+                        if (world.canEntityModifyAt(player, blockPos)) {
                             // Encode the position in the block hit result
                             BlockHitResult blockHitResult = new BlockHitResult(player.getPos(),
                                     player.getHorizontalFacing(), blockPos, false);
@@ -78,8 +78,7 @@ public class ServerNetworking {
                                 Criteria.ANY_BLOCK_USE.trigger(player, blockPos, itemStack.copy());
                             }
 
-                            if (actionResult instanceof ActionResult.Success) {
-                                ActionResult.Success success = (ActionResult.Success) actionResult;
+                            if (actionResult instanceof ActionResult.Success success) {
                                 if (success.swingSource() == SwingSource.SERVER) {
                                     player.swingHand(hand, true);
                                 }

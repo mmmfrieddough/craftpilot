@@ -35,13 +35,14 @@ import net.minecraft.client.render.Camera;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket;
+import net.minecraft.resource.featuretoggle.FeatureSet;
+import net.minecraft.screen.ScreenHandler;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
 import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket;
-import net.minecraft.screen.ScreenHandler;
+import net.minecraft.world.World;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -61,7 +62,7 @@ class GhostBlockServiceTest {
     @Mock
     private Item item;
     @Mock
-    private ItemStack stack = Blocks.DIRT.asItem().getDefaultStack();
+    private ItemStack stack;
     @Mock
     private Camera camera;
     @Mock
@@ -98,6 +99,10 @@ class GhostBlockServiceTest {
         when(item.getDefaultStack()).thenReturn(stack);
         when(stack.isEmpty()).thenReturn(false);
         when(stack.isItemEnabled(any())).thenReturn(true);
+        ItemStack exampleStack = Blocks.DIRT.asItem().getDefaultStack();
+        when(stack.getRegistryEntry()).thenReturn(exampleStack.getRegistryEntry());
+        when(stack.getCount()).thenReturn(exampleStack.getCount());
+        when(stack.getComponentChanges()).thenReturn(exampleStack.getComponentChanges());
         when(state.getOutlineShape(any(), any())).thenReturn(VoxelShapes.fullCube());
 
         // Camera setup - looking straight ahead along positive X axis by default
@@ -195,7 +200,7 @@ class GhostBlockServiceTest {
                     screenHandler);
 
             assertTrue(result);
-            assertEquals(0, inventory.selectedSlot);
+            assertEquals(0, inventory.getSelectedSlot());
             verify(inventory, never()).swapStackWithHotbar(any());
             verify(inventory, never()).swapSlotWithHotbar(anyInt());
         }
@@ -206,7 +211,7 @@ class GhostBlockServiceTest {
             when(inventory.getSlotWithStack(stack)).thenReturn(9);
 
             GhostBlockService.updateCurrentTarget(world, worldManager, camera, 5, vanillaTarget);
-            boolean result = GhostBlockService.handleGhostBlockPick(null, true, inventory, networkHandler,
+            boolean result = GhostBlockService.handleGhostBlockPick(FeatureSet.empty(), true, inventory, networkHandler,
                     screenHandler);
 
             assertTrue(result);
