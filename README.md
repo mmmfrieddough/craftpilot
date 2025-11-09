@@ -84,3 +84,131 @@ Running the ML model is very performance intensive and hardware dependent. There
 ## Customization
 
 Settings can be edited in the config file "craftpilot.json" or on the configuration screen accessed through [Mod Menu](https://github.com/TerraformersMC/ModMenu). Available settings include visual options (like overlay appearance), building behavior, and ML model parameters.
+
+## Development
+
+### Prerequisites
+
+- Java 21 or higher
+- A modern IDE
+- Git
+
+### Setting Up the Development Environment
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/mmmfrieddough/craftpilot.git
+   cd craftpilot
+   ```
+
+2. Generate Minecraft sources:
+   ```bash
+   ./gradlew genSources
+   ```
+
+3. Import the project into your IDE as a Gradle project
+
+### Building
+
+Build the mod JAR:
+```bash
+./gradlew build
+```
+
+The compiled mod will be in `build/libs/`.
+
+### Testing
+
+Run the Minecraft client with your mod loaded:
+```bash
+./gradlew runClient
+```
+
+Run unit tests:
+```bash
+./gradlew test
+```
+
+### Updating to a New Minecraft Version
+
+When a new Minecraft version is released, follow these steps to update the mod:
+
+#### 1. Update Version Properties
+
+Visit [Fabric's development page](https://fabricmc.net/develop) to find the latest versions. You can copy the Fabric Properties section directly from that page and paste it into `gradle.properties`, then update the mod version:
+
+```properties
+# Fabric Properties (copy from https://fabricmc.net/develop)
+minecraft_version=<NEW_VERSION>
+yarn_mappings=<NEW_VERSION>+build.X
+loader_version=<NEW_LOADER_VERSION>
+loom_version=<NEW_LOOM_VERSION>
+
+# Fabric API
+fabric_version=<NEW_FABRIC_API_VERSION>
+
+# Mod Properties
+mod_version=<INCREMENT_YOUR_VERSION>
+```
+
+#### 2. Update Dependency Versions
+
+Check for updates to these dependencies and update their versions in `gradle.properties`:
+- **ModMenu**: [Modrinth releases](https://modrinth.com/mod/modmenu/versions)
+- **Cloth Config**: [Modrinth releases](https://modrinth.com/mod/cloth-config/versions)
+
+```properties
+modmenu_version=<NEW_VERSION>
+cloth_config_version=<NEW_VERSION>
+```
+
+> **Note**: The `fabric.mod.json` file automatically uses the versions from `gradle.properties` during the build process, so you don't need to update it manually!
+
+#### 3. Refresh Gradle and Regenerate Sources
+
+```bash
+./gradlew clean
+./gradlew genSources
+```
+
+#### 4. Fix Breaking Changes
+
+Review the [Minecraft changelog](https://minecraft.wiki/w/Java_Edition_version_history) for your target version and check for:
+
+- **Rendering API changes** - Pay special attention to:
+  - `DrawContext` method signatures
+  - `RenderLayer` APIs
+  - Texture rendering methods
+  
+- **Identifier API changes** - Verify `Identifier.of()` is still the correct method
+
+- **Deprecated/removed methods** - Your IDE will highlight compilation errors
+
+- **Mixin targets** - If method names changed with mappings updates
+
+#### 5. Test Thoroughly
+
+1. Build: `./gradlew build`
+2. Run: `./gradlew runClient`
+3. Test all features:
+   - UI rendering (activity indicator, overlays)
+   - Configuration screen
+   - Ghost block placement and rendering
+   - Keybindings
+   - Model connector functionality
+
+### Quick Reference: Files to Update
+
+| File | What to Change |
+|------|----------------|
+| `gradle.properties` | All version numbers (Minecraft, Fabric API, Loader, Loom, dependencies, mod version) |
+| Java source files | Fix any API changes causing compilation errors |
+
+**Note**: `fabric.mod.json` is automatically updated from `gradle.properties` during the build, so no manual changes needed!
+
+### Useful Resources
+
+- [Fabric Wiki](https://fabricmc.net/wiki/start) - Official Fabric modding documentation
+- [Fabric Discord](https://discord.gg/v6v4pMv) - Community support
+- [Yarn Mappings](https://github.com/FabricMC/yarn) - Method/class name mappings
+- [Minecraft Wiki](https://minecraft.wiki/) - Game mechanics and version history
