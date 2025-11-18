@@ -50,7 +50,7 @@ public class AlternativesRenderer {
             }
 
             // Draw border
-            context.drawBorder(squareX, y, SQUARE_SIZE, SQUARE_SIZE, BORDER_COLOR);
+            context.drawStrokedRectangle(squareX, y, SQUARE_SIZE, SQUARE_SIZE, BORDER_COLOR);
         }
     }
 }

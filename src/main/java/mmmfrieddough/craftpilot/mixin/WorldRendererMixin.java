@@ -3,11 +3,14 @@ package mmmfrieddough.craftpilot.mixin;
 import java.util.Map;
 
 import org.joml.Matrix4f;
+import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 
 import mmmfrieddough.craftpilot.CraftPilotClient;
 import mmmfrieddough.craftpilot.config.ModConfig;
@@ -18,11 +21,11 @@ import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.render.state.OutlineRenderState;
 import net.minecraft.client.util.ObjectAllocator;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
@@ -46,8 +49,8 @@ public class WorldRendererMixin {
 
     @Inject(method = "render", at = @At("HEAD"))
     private void onRenderStart(ObjectAllocator objectAllocator, RenderTickCounter renderTickCounter,
-            boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, Matrix4f positionMatrix,
-            Matrix4f projectionMatrix, CallbackInfo ci) {
+            boolean renderBlockOutline, Camera camera, Matrix4f matrix1, Matrix4f matrix2, Matrix4f matrix3,
+            GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bool2, CallbackInfo ci) {
         Profilers.get().push("craftpilot_update_targetted_block");
 
         if (client.player != null) {
@@ -64,11 +67,15 @@ public class WorldRendererMixin {
         Profilers.get().pop();
     }
 
-    @Inject(method = "render", at = @At("RETURN"))
-    private void onRender(ObjectAllocator objectAllocator, RenderTickCounter renderTickCounter,
-            boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer,
-            Matrix4f positionMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
-        Profilers.get().push("craftpilot_render_blocks");
+    @Inject(method = "renderTargetBlockOutline", at = @At("RETURN"))
+    private void onRenderAfterOutline(VertexConsumerProvider.Immediate immediate, MatrixStack matrices,
+            boolean renderBlockOutline, net.minecraft.client.render.state.WorldRenderState renderStates,
+            CallbackInfo ci) {
+        // Inject after block outline rendering (line 656) but before final
+        // immediate.draw() (line 659)
+        // This ensures ghost blocks render after translucent blocks for proper depth
+        // sorting
+        Profilers.get().push("craftpilot_ghost_blocks");
 
         Map<BlockPos, BlockState> ghostBlocks = worldManager.getGhostBlocks();
 
@@ -79,15 +86,7 @@ public class WorldRendererMixin {
         }
 
         int renderDistance = config.rendering.renderDistance;
-
-        // Create vertex consumer once
-        VertexConsumerProvider.Immediate immediate = client.getBufferBuilders().getEntityVertexConsumers();
-
-        // Create a new MatrixStack for our transformations
-        MatrixStack matrices = new MatrixStack();
-        matrices.push();
-        // Apply the position matrix to align with world coordinates
-        matrices.multiplyPositionMatrix(positionMatrix);
+        Camera camera = client.gameRenderer.getCamera();
 
         GhostBlockRenderService.renderGhostBlocks(client, ghostBlocks, camera, renderDistance,
                 config.rendering.blockPlacementOpacity, matrices, immediate);
@@ -96,14 +95,12 @@ public class WorldRendererMixin {
                 config.rendering,
                 matrices, immediate);
 
-        matrices.pop();
-
         Profilers.get().pop();
     }
 
     @Inject(method = "drawBlockOutline", at = @At("HEAD"), cancellable = true)
-    private void onDrawBlockOutline(MatrixStack matrices, VertexConsumer vertexConsumer, Entity entity, double cameraX,
-            double cameraY, double cameraZ, BlockPos blockPos, BlockState blockState, int i, CallbackInfo ci) {
+    private void onDrawBlockOutline(MatrixStack matrices, VertexConsumer vertexConsumer, double cameraX,
+            double cameraY, double cameraZ, OutlineRenderState outlineRenderState, int i, CallbackInfo ci) {
         if (GhostBlockService.getCurrentTarget() != null) {
             ci.cancel();
         }

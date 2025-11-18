@@ -49,7 +49,7 @@ public class MinecraftClientMixin {
     @Inject(method = "doItemPick", at = @At("HEAD"), cancellable = true)
     private void onDoItemPick(CallbackInfo ci) {
         // Extract necessary information
-        FeatureSet enabledFeatures = instance.player.getWorld().getEnabledFeatures();
+        FeatureSet enabledFeatures = instance.player.getEntityWorld().getEnabledFeatures();
         boolean creativeMode = instance.interactionManager.getCurrentGameMode().isCreative();
         PlayerInventory inventory = instance.player.getInventory();
         ClientPlayNetworkHandler networkHandler = instance.getNetworkHandler();

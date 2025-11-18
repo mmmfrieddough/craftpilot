@@ -2,13 +2,8 @@ package mmmfrieddough.craftpilot.service;
 
 import java.util.Map;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-
 import mmmfrieddough.craftpilot.config.ModConfig.Rendering;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.RenderLayer;
@@ -27,6 +22,41 @@ public final class GhostBlockRenderService {
     }
 
     /**
+     * Wraps a VertexConsumer to multiply alpha values
+     */
+    private record AlphaVertexConsumer(VertexConsumer delegate, float alphaMultiplier) implements VertexConsumer {
+        @Override
+        public VertexConsumer vertex(float x, float y, float z) {
+            return delegate.vertex(x, y, z);
+        }
+
+        @Override
+        public VertexConsumer color(int red, int green, int blue, int alpha) {
+            return delegate.color(red, green, blue, (int) (alpha * alphaMultiplier));
+        }
+
+        @Override
+        public VertexConsumer texture(float u, float v) {
+            return delegate.texture(u, v);
+        }
+
+        @Override
+        public VertexConsumer overlay(int u, int v) {
+            return delegate.overlay(u, v);
+        }
+
+        @Override
+        public VertexConsumer light(int u, int v) {
+            return delegate.light(u, v);
+        }
+
+        @Override
+        public VertexConsumer normal(float x, float y, float z) {
+            return delegate.normal(x, y, z);
+        }
+    }
+
+    /**
      * Renders ghost blocks with translucent effect
      */
     public static void renderGhostBlocks(MinecraftClient client, Map<BlockPos, BlockState> ghostBlocks, Camera camera,
@@ -37,9 +67,7 @@ public final class GhostBlockRenderService {
         double cameraZ = camera.getPos().z;
 
         BlockRenderManager blockRenderManager = client.getBlockRenderManager();
-
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, opacity);
-        RenderLayer renderLayer = RenderLayer.getTranslucent();
+        RenderLayer renderLayer = RenderLayer.getTranslucentMovingBlock();
 
         // Render ghost blocks
         for (Map.Entry<BlockPos, BlockState> entry : ghostBlocks.entrySet()) {
@@ -50,29 +78,36 @@ public final class GhostBlockRenderService {
             }
 
             BlockState state = entry.getValue();
-            Block block = state.getBlock();
 
             matrices.push();
             matrices.translate(pos.getX() - cameraX, pos.getY() - cameraY, pos.getZ() - cameraZ);
 
-            if (block instanceof BlockEntityProvider provider) {
-                BlockEntity blockEntity = provider.createBlockEntity(pos, state);
-                blockEntity.setWorld(client.world);
-                client.getBlockEntityRenderDispatcher().render(blockEntity, 0f, matrices, immediate);
-            } else {
-                BlockStateModel blockStateModel = blockRenderManager.getModel(state);
-                VertexConsumer vertexConsumer = immediate.getBuffer(renderLayer);
-                client.getBlockRenderManager().renderBlock(state, pos, client.world, matrices, vertexConsumer, false,
-                        blockStateModel.getParts(client.world.random));
-            }
+            // TODO: Fix block entity rendering with new API
+            // The BlockEntityRenderManager API changed significantly in 1.21:
+            // - Now requires creating BlockEntityRenderState first via getRenderState()
+            // - Then calling render() with OrderedRenderCommandQueue and CameraRenderState
+            // - Need to investigate proper way to render detached block entities for ghost
+            // blocks
+            // Old code (doesn't compile):
+            // if (block instanceof BlockEntityProvider provider) {
+            // BlockEntity blockEntity = provider.createBlockEntity(pos, state);
+            // blockEntity.setWorld(client.world);
+            // client.getBlockEntityRenderDispatcher().render(blockEntity, matrices,
+            // immediate);
+            // }
+
+            BlockStateModel blockStateModel = blockRenderManager.getModel(state);
+            VertexConsumer vertexConsumer = immediate.getBuffer(renderLayer);
+            // Wrap the vertex consumer to apply our custom opacity
+            VertexConsumer alphaVertexConsumer = new AlphaVertexConsumer(vertexConsumer, opacity);
+            client.getBlockRenderManager().renderBlock(state, pos, client.world, matrices, alphaVertexConsumer,
+                    false,
+                    blockStateModel.getParts(client.world.random));
 
             matrices.pop();
         }
 
         immediate.draw();
-
-        // Reset shader color
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
     /**
