@@ -1,7 +1,11 @@
 package mmmfrieddough.craftpilot.service;
 
-import java.util.Map;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import mmmfrieddough.craftpilot.config.ModConfig.Rendering;
 import net.minecraft.block.BlockRenderType;
@@ -23,8 +27,37 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.shape.VoxelShape;
 
 public final class GhostBlockRenderService {
-    // Prevent instantiation
+    private static Set<BlockPos> activeGhostPositions = Collections.emptySet();
+    private static float activeOpacity = 1.0f;
+    private static final Map<RenderLayer, RenderLayer> TRANSLUCENT_LAYER_MAP = new ConcurrentHashMap<>();
+
     private GhostBlockRenderService() {
+    }
+
+    public static void setActiveGhostContext(Set<BlockPos> positions, float opacity) {
+        activeGhostPositions = positions;
+        activeOpacity = opacity;
+    }
+
+    public static void clearActiveGhostContext() {
+        activeGhostPositions = Collections.emptySet();
+        activeOpacity = 1.0f;
+    }
+
+    public static boolean isGhostBlockEntity(BlockPos pos) {
+        return activeGhostPositions.contains(pos);
+    }
+
+    public static float getActiveOpacity() {
+        return activeOpacity;
+    }
+
+    public static void registerTranslucentLayer(RenderLayer opaqueLayer, RenderLayer translucentLayer) {
+        TRANSLUCENT_LAYER_MAP.putIfAbsent(opaqueLayer, translucentLayer);
+    }
+
+    public static RenderLayer getTranslucentLayer(RenderLayer layer) {
+        return TRANSLUCENT_LAYER_MAP.getOrDefault(layer, layer);
     }
 
     /**
@@ -74,7 +107,6 @@ public final class GhostBlockRenderService {
 
         BlockRenderManager blockRenderManager = client.getBlockRenderManager();
         RenderLayer renderLayer = RenderLayer.getTranslucentMovingBlock();
-
         // Render ghost blocks
         for (Map.Entry<BlockPos, BlockState> entry : ghostBlocks.entrySet()) {
             BlockPos pos = entry.getKey();
@@ -104,12 +136,15 @@ public final class GhostBlockRenderService {
     }
 
     /**
-     * Adds ghost block entities to the current world render state list.
+     * Adds ghost block entities to the world render state list and tracks their
+     * positions for alpha wrapping by BlockEntityRenderManagerMixin.
      */
-    public static void renderGhostBlockEntities(MinecraftClient client, Map<BlockPos, BlockState> ghostBlocks, Camera camera,
-            int renderDistance, List<BlockEntityRenderState> blockEntityRenderStates) {
+    public static void renderGhostBlockEntities(MinecraftClient client, Map<BlockPos, BlockState> ghostBlocks,
+            Camera camera, int renderDistance, float opacity,
+            List<BlockEntityRenderState> blockEntityRenderStates) {
         BlockPos cameraPos = camera.getBlockPos();
         BlockEntityRenderManager blockEntityRenderManager = client.getBlockEntityRenderDispatcher();
+        Set<BlockPos> ghostPositions = new HashSet<>();
 
         for (Map.Entry<BlockPos, BlockState> entry : ghostBlocks.entrySet()) {
             BlockPos pos = entry.getKey();
@@ -131,8 +166,11 @@ public final class GhostBlockRenderService {
             BlockEntityRenderState renderState = blockEntityRenderManager.getRenderState(blockEntity, 0.0f, null);
             if (renderState != null) {
                 blockEntityRenderStates.add(renderState);
+                ghostPositions.add(pos);
             }
         }
+
+        setActiveGhostContext(ghostPositions, opacity);
     }
 
     /**

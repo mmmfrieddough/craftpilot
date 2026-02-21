@@ -99,7 +99,8 @@ public class WorldRendererMixin {
     }
 
     @Inject(method = "renderBlockEntities", at = @At("HEAD"))
-    private void onRenderBlockEntities(MatrixStack matrices, net.minecraft.client.render.state.WorldRenderState renderStates,
+    private void onRenderBlockEntitiesStart(MatrixStack matrices,
+            net.minecraft.client.render.state.WorldRenderState renderStates,
             net.minecraft.client.render.command.OrderedRenderCommandQueueImpl queue, CallbackInfo ci) {
         Map<BlockPos, BlockState> ghostBlocks = worldManager.getGhostBlocks();
         if (ghostBlocks.isEmpty()) {
@@ -109,7 +110,14 @@ public class WorldRendererMixin {
         int renderDistance = config.rendering.renderDistance;
         Camera camera = client.gameRenderer.getCamera();
         GhostBlockRenderService.renderGhostBlockEntities(client, ghostBlocks, camera, renderDistance,
-                renderStates.blockEntityRenderStates);
+                config.rendering.blockPlacementOpacity, renderStates.blockEntityRenderStates);
+    }
+
+    @Inject(method = "renderBlockEntities", at = @At("RETURN"))
+    private void onRenderBlockEntitiesEnd(MatrixStack matrices,
+            net.minecraft.client.render.state.WorldRenderState renderStates,
+            net.minecraft.client.render.command.OrderedRenderCommandQueueImpl queue, CallbackInfo ci) {
+        GhostBlockRenderService.clearActiveGhostContext();
     }
 
     @Inject(method = "drawBlockOutline", at = @At("HEAD"), cancellable = true)
