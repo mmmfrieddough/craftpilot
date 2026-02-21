@@ -24,6 +24,7 @@ import net.minecraft.client.render.block.entity.state.BlockEntityRenderState;
 import net.minecraft.client.render.model.BlockStateModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.random.CheckedRandom;
 import net.minecraft.util.shape.VoxelShape;
 
 public final class GhostBlockRenderService {
@@ -126,7 +127,7 @@ public final class GhostBlockRenderService {
                 // Wrap the vertex consumer to apply our custom opacity
                 VertexConsumer alphaVertexConsumer = new AlphaVertexConsumer(vertexConsumer, opacity);
                 blockRenderManager.renderBlock(state, pos, client.world, matrices, alphaVertexConsumer, false,
-                        blockStateModel.getParts(client.world.random));
+                        blockStateModel.getParts(new CheckedRandom(state.getRenderingSeed(pos))));
             }
 
             matrices.pop();
