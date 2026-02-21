@@ -162,8 +162,6 @@ modmenu_version=<NEW_VERSION>
 cloth_config_version=<NEW_VERSION>
 ```
 
-> **Note**: The `fabric.mod.json` file automatically uses the versions from `gradle.properties` during the build process, so you don't need to update it manually!
-
 #### 3. Refresh Gradle and Regenerate Sources
 
 ```bash
@@ -173,18 +171,10 @@ cloth_config_version=<NEW_VERSION>
 
 #### 4. Fix Breaking Changes
 
-Review the [Minecraft changelog](https://minecraft.wiki/w/Java_Edition_version_history) for your target version and check for:
+Review the [Minecraft changelog](https://minecraft.wiki/w/Java_Edition_version_history) for your target version. Your IDE will highlight compilation errors from any API changes. Pay special attention to:
 
-- **Rendering API changes** - Pay special attention to:
-  - `DrawContext` method signatures
-  - `RenderLayer` APIs
-  - Texture rendering methods
-  
-- **Identifier API changes** - Verify `Identifier.of()` is still the correct method
-
-- **Deprecated/removed methods** - Your IDE will highlight compilation errors
-
-- **Mixin targets** - If method names changed with mappings updates
+- **Mixin targets** - Method signatures may change with new mappings
+- **Rendering APIs** - These change frequently between versions
 
 #### 5. Test Thoroughly
 
@@ -197,14 +187,11 @@ Review the [Minecraft changelog](https://minecraft.wiki/w/Java_Edition_version_h
    - Keybindings
    - Model connector functionality
 
-### Quick Reference: Files to Update
+#### 6. Release
 
-| File | What to Change |
-|------|----------------|
-| `gradle.properties` | All version numbers (Minecraft, Fabric API, Loader, Loom, dependencies, mod version) |
-| Java source files | Fix any API changes causing compilation errors |
-
-**Note**: `fabric.mod.json` is automatically updated from `gradle.properties` during the build, so no manual changes needed!
+1. Commit and push all changes
+2. Create a new [GitHub Release](https://github.com/mmmfrieddough/craftpilot/releases/new) with the new version tag
+3. The release workflow will automatically build and publish to Modrinth and CurseForge
 
 ### Useful Resources
 
