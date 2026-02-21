@@ -59,11 +59,11 @@ public class ServerNetworking {
                 // The player must be in range or in creative mode
                 if (player.canInteractWithBlockAt(blockPos, 1.0) || player.isCreative()) {
                     player.updateLastActionTime();
-                    int i = player.getWorld().getTopYInclusive();
+                    int i = player.getEntityWorld().getTopYInclusive();
                     if (blockPos.getY() <= i) {
                         if (world.canEntityModifyAt(player, blockPos)) {
                             // Encode the position in the block hit result
-                            BlockHitResult blockHitResult = new BlockHitResult(player.getPos(),
+                            BlockHitResult blockHitResult = new BlockHitResult(player.getEntityPos(),
                                     player.getHorizontalFacing(), blockPos, false);
 
                             // Set the ghost block state before interacting with the block

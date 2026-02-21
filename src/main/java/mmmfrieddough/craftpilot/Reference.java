@@ -2,13 +2,17 @@ package mmmfrieddough.craftpilot;
 
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
-import net.minecraft.MinecraftVersion;
+import net.minecraft.GameVersion;
+import net.minecraft.SharedConstants;
 
 public class Reference {
     public static final String MOD_ID = "craftpilot";
     public static final String MOD_NAME = "Craftpilot";
-    public static final String MC_VERSION = MinecraftVersion.CURRENT.getName();
-    public static final int MC_DATA_VERSION = MinecraftVersion.CURRENT.getSaveVersion().getId();
+
+    private static final GameVersion GAME_VERSION = SharedConstants.getGameVersion();
+    public static final String MC_VERSION = GAME_VERSION.name();
+    public static final int MC_DATA_VERSION = GAME_VERSION.dataVersion().id();
+
     public static final String MOD_TYPE = "fabric";
     public static final String MOD_VERSION;
 

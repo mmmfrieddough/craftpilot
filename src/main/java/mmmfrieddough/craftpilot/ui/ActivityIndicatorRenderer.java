@@ -4,8 +4,8 @@ import mmmfrieddough.craftpilot.Reference;
 import mmmfrieddough.craftpilot.model.IModelConnector;
 import mmmfrieddough.craftpilot.world.IWorldManager;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
@@ -38,7 +38,7 @@ public class ActivityIndicatorRenderer {
         int color = (alphaInt << 24) | 0xFFFFFF; // ARGB format
 
         // Draw the texture
-        context.drawTexture(RenderLayer::getGuiTextured, INDICATOR_TEXTURE, x, y, 0.0f, 0.0f, IMG_WIDTH, IMG_HEIGHT,
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, INDICATOR_TEXTURE, x, y, 0.0f, 0.0f, IMG_WIDTH, IMG_HEIGHT,
                 IMG_WIDTH, IMG_HEIGHT, color);
     }
 

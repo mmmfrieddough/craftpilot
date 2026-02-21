@@ -103,7 +103,7 @@ public final class GhostBlockService {
             client.player.setStackInHand(Hand.MAIN_HAND, itemStack);
         }
 
-        Vec3d playerPos = client.player.getPos();
+        Vec3d playerPos = client.player.getEntityPos();
         Direction playerFacing = client.player.getHorizontalFacing();
         BlockHitResult blockHitResult = new BlockHitResult(playerPos, playerFacing, pos, false);
 

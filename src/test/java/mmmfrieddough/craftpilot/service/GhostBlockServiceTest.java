@@ -89,7 +89,7 @@ class GhostBlockServiceTest {
         // Basic minecraft setup
         client.player = player;
         when(player.getInventory()).thenReturn(inventory);
-        when(player.getWorld()).thenReturn(world);
+        when(player.getEntityWorld()).thenReturn(world);
         when(world.getEnabledFeatures()).thenReturn(null);
         when(vanillaTarget.getType()).thenReturn(HitResult.Type.MISS);
 

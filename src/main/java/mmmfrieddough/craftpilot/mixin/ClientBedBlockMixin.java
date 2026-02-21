@@ -34,7 +34,7 @@ public class ClientBedBlockMixin {
             ItemStack itemStack, CallbackInfo ci) {
         // Since the original method only runs on the server, we run the same logic on
         // the client
-        if (world.isClient) {
+        if (world.isClient()) {
             BlockPos blockPos = pos.offset((Direction) state.get(HorizontalFacingBlock.FACING));
             world.setBlockState(blockPos, (BlockState) state.with(BedBlock.PART, BedPart.HEAD), 3);
             world.updateNeighbors(pos, Blocks.AIR);

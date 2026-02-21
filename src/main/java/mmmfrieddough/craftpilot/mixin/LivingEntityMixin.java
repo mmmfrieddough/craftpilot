@@ -15,7 +15,7 @@ public class LivingEntityMixin {
     @Inject(method = "getStackInHand", at = @At("HEAD"), cancellable = true)
     private void getStackInHandOverride(Hand hand, CallbackInfoReturnable<ItemStack> cir) {
         // This should only run on the server
-        if (((LivingEntity) (Object) this).getWorld().isClient()) {
+        if (((LivingEntity) (Object) this).getEntityWorld().isClient()) {
             return;
         }
 

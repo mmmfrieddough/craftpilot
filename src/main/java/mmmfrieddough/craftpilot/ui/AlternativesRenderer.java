@@ -18,6 +18,13 @@ public class AlternativesRenderer {
     private static final int BACKGROUND_COLOR = 0x998b8b8b;
     private static final int SELECTED_COLOR_ALPHA = 0x99;
 
+    private void drawBorder(DrawContext context, int x, int y, int width, int height, int color) {
+        context.fill(x, y, x + width, y + 1, color);
+        context.fill(x, y + height - 1, x + width, y + height, color);
+        context.fill(x, y, x + 1, y + height, color);
+        context.fill(x + width - 1, y, x + width, y + height, color);
+    }
+
     public void render(DrawContext context, ModConfig.Rendering config, MinecraftClient client,
             IWorldManager worldManager) {
         if (!worldManager.hasGhostBlocks()) {
@@ -26,31 +33,23 @@ public class AlternativesRenderer {
 
         int totalAlternatives = worldManager.getTotalAlternativeNum();
         int selected = worldManager.getSelectedAlternativeNum();
-        int width = client.getWindow().getScaledWidth();
+        int windowWidth = client.getWindow().getScaledWidth();
         int selectedColor = (SELECTED_COLOR_ALPHA << 24) | config.normalOutlineColor;
 
-        // Calculate starting position (first square's left edge, next to activity
-        // indicator)
-        int startX = width - PADDING - ACTIVITY_INDICATOR_WIDTH - (totalAlternatives * (SQUARE_SIZE + SQUARE_MARGIN))
-                + SQUARE_MARGIN;
-        // Center vertically with activity indicator
+        int startX = windowWidth - PADDING - ACTIVITY_INDICATOR_WIDTH
+                - (totalAlternatives * (SQUARE_SIZE + SQUARE_MARGIN)) + SQUARE_MARGIN;
         int y = PADDING + (ACTIVITY_INDICATOR_HEIGHT - SQUARE_SIZE) / 2;
 
-        // Draw squares from left to right
         for (int i = 0; i < totalAlternatives; i++) {
-            // Calculate position (moving right from start position)
             int squareX = startX + (i * (SQUARE_SIZE + SQUARE_MARGIN));
 
-            // Fill background
             context.fill(squareX, y, squareX + SQUARE_SIZE, y + SQUARE_SIZE, BACKGROUND_COLOR);
 
-            // Highlight selected alternative
             if (i == selected) {
                 context.fill(squareX, y, squareX + SQUARE_SIZE, y + SQUARE_SIZE, selectedColor);
             }
 
-            // Draw border
-            context.drawBorder(squareX, y, SQUARE_SIZE, SQUARE_SIZE, BORDER_COLOR);
+            drawBorder(context, squareX, y, SQUARE_SIZE, SQUARE_SIZE, BORDER_COLOR);
         }
     }
 }

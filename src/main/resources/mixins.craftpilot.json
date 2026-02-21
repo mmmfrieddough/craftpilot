@@ -7,7 +7,9 @@
         "LivingEntityMixin"
     ],
     "client": [
+        "BlockEntityRenderManagerMixin",
         "BlockItemMixinClient",
+        "RenderLayerMixin",
         "WorldRendererMixin",
         "MinecraftClientMixin",
         "ClientPlayerInteractionManagerMixin",
