@@ -98,6 +98,20 @@ public class WorldRendererMixin {
         Profilers.get().pop();
     }
 
+    @Inject(method = "renderBlockEntities", at = @At("HEAD"))
+    private void onRenderBlockEntities(MatrixStack matrices, net.minecraft.client.render.state.WorldRenderState renderStates,
+            net.minecraft.client.render.command.OrderedRenderCommandQueueImpl queue, CallbackInfo ci) {
+        Map<BlockPos, BlockState> ghostBlocks = worldManager.getGhostBlocks();
+        if (ghostBlocks.isEmpty()) {
+            return;
+        }
+
+        int renderDistance = config.rendering.renderDistance;
+        Camera camera = client.gameRenderer.getCamera();
+        GhostBlockRenderService.renderGhostBlockEntities(client, ghostBlocks, camera, renderDistance,
+                renderStates.blockEntityRenderStates);
+    }
+
     @Inject(method = "drawBlockOutline", at = @At("HEAD"), cancellable = true)
     private void onDrawBlockOutline(MatrixStack matrices, VertexConsumer vertexConsumer, double cameraX,
             double cameraY, double cameraZ, OutlineRenderState outlineRenderState, int i, CallbackInfo ci) {

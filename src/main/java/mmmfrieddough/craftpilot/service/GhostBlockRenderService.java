@@ -1,9 +1,13 @@
 package mmmfrieddough.craftpilot.service;
 
 import java.util.Map;
+import java.util.List;
 
 import mmmfrieddough.craftpilot.config.ModConfig.Rendering;
+import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.BlockEntityProvider;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.RenderLayer;
@@ -11,6 +15,8 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.VertexRendering;
 import net.minecraft.client.render.block.BlockRenderManager;
+import net.minecraft.client.render.block.entity.BlockEntityRenderManager;
+import net.minecraft.client.render.block.entity.state.BlockEntityRenderState;
 import net.minecraft.client.render.model.BlockStateModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
@@ -82,32 +88,51 @@ public final class GhostBlockRenderService {
             matrices.push();
             matrices.translate(pos.getX() - cameraX, pos.getY() - cameraY, pos.getZ() - cameraZ);
 
-            // TODO: Fix block entity rendering with new API
-            // The BlockEntityRenderManager API changed significantly in 1.21:
-            // - Now requires creating BlockEntityRenderState first via getRenderState()
-            // - Then calling render() with OrderedRenderCommandQueue and CameraRenderState
-            // - Need to investigate proper way to render detached block entities for ghost
-            // blocks
-            // Old code (doesn't compile):
-            // if (block instanceof BlockEntityProvider provider) {
-            // BlockEntity blockEntity = provider.createBlockEntity(pos, state);
-            // blockEntity.setWorld(client.world);
-            // client.getBlockEntityRenderDispatcher().render(blockEntity, matrices,
-            // immediate);
-            // }
-
-            BlockStateModel blockStateModel = blockRenderManager.getModel(state);
-            VertexConsumer vertexConsumer = immediate.getBuffer(renderLayer);
-            // Wrap the vertex consumer to apply our custom opacity
-            VertexConsumer alphaVertexConsumer = new AlphaVertexConsumer(vertexConsumer, opacity);
-            client.getBlockRenderManager().renderBlock(state, pos, client.world, matrices, alphaVertexConsumer,
-                    false,
-                    blockStateModel.getParts(client.world.random));
+            if (state.getRenderType() == BlockRenderType.MODEL) {
+                BlockStateModel blockStateModel = blockRenderManager.getModel(state);
+                VertexConsumer vertexConsumer = immediate.getBuffer(renderLayer);
+                // Wrap the vertex consumer to apply our custom opacity
+                VertexConsumer alphaVertexConsumer = new AlphaVertexConsumer(vertexConsumer, opacity);
+                blockRenderManager.renderBlock(state, pos, client.world, matrices, alphaVertexConsumer, false,
+                        blockStateModel.getParts(client.world.random));
+            }
 
             matrices.pop();
         }
 
         immediate.draw();
+    }
+
+    /**
+     * Adds ghost block entities to the current world render state list.
+     */
+    public static void renderGhostBlockEntities(MinecraftClient client, Map<BlockPos, BlockState> ghostBlocks, Camera camera,
+            int renderDistance, List<BlockEntityRenderState> blockEntityRenderStates) {
+        BlockPos cameraPos = camera.getBlockPos();
+        BlockEntityRenderManager blockEntityRenderManager = client.getBlockEntityRenderDispatcher();
+
+        for (Map.Entry<BlockPos, BlockState> entry : ghostBlocks.entrySet()) {
+            BlockPos pos = entry.getKey();
+            if (!pos.isWithinDistance(cameraPos, renderDistance)) {
+                continue;
+            }
+
+            BlockState state = entry.getValue();
+            if (!(state.getBlock() instanceof BlockEntityProvider provider)) {
+                continue;
+            }
+
+            BlockEntity blockEntity = provider.createBlockEntity(pos, state);
+            if (blockEntity == null) {
+                continue;
+            }
+            blockEntity.setWorld(client.world);
+
+            BlockEntityRenderState renderState = blockEntityRenderManager.getRenderState(blockEntity, 0.0f, null);
+            if (renderState != null) {
+                blockEntityRenderStates.add(renderState);
+            }
+        }
     }
 
     /**
