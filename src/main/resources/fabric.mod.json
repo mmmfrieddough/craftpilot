@@ -32,7 +32,7 @@
 		"java": ">=21",
 		"minecraft": "${minecraft_version}",
 		"fabricloader": ">=${loader_version}",
-		"fabric-api": ">=${fabric_version}",
+		"fabric-api": ">=${fabric_api_version}",
 		"cloth-config": ">=${cloth_config_version}"
 	},
 	"suggests": {
