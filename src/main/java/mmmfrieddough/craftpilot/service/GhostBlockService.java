@@ -298,7 +298,7 @@ public final class GhostBlockService {
      */
     private static GhostBlockTarget getGhostBlockTarget(World world, IWorldManager worldManager, Camera camera,
             double reach, HitResult vanillaTarget) {
-        Vec3d cameraPos = camera.getPos();
+        Vec3d cameraPos = camera.getCameraPos();
         Vec3d rotationVec = camera.getFocusedEntity().getRotationVec(1.0f);
         Map<BlockPos, BlockState> ghostBlocks = worldManager.getGhostBlocks();
 

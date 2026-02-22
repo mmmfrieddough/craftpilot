@@ -106,7 +106,7 @@ class GhostBlockServiceTest {
         when(state.getOutlineShape(any(), any())).thenReturn(VoxelShapes.fullCube());
 
         // Camera setup - looking straight ahead along positive X axis by default
-        when(camera.getPos()).thenReturn(new Vec3d(0, 0, 0));
+        when(camera.getCameraPos()).thenReturn(new Vec3d(0, 0, 0));
         when(camera.getFocusedEntity()).thenReturn(focusedEntity);
         when(focusedEntity.getRotationVec(1.0f)).thenReturn(new Vec3d(1, 0, 0));
 
