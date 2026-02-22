@@ -28,7 +28,7 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 	
 	modImplementation "com.google.code.gson:gson:${project.gson_version}"
 
@@ -44,7 +44,7 @@ processResources {
 	inputs.property "version", project.version
 	inputs.property "minecraft_version", project.minecraft_version
 	inputs.property "loader_version", project.loader_version
-	inputs.property "fabric_version", project.fabric_version
+	inputs.property "fabric_api_version", project.fabric_api_version
 	inputs.property "cloth_config_version", project.cloth_config_version
 	inputs.property "modmenu_version", project.modmenu_version
 
@@ -52,7 +52,7 @@ processResources {
 		expand "version": project.version,
 			"minecraft_version": project.minecraft_version,
 			"loader_version": project.loader_version,
-			"fabric_version": project.fabric_version,
+			"fabric_api_version": project.fabric_api_version,
 			"cloth_config_version": project.cloth_config_version,
 			"modmenu_version": project.modmenu_version
 	}

@@ -122,7 +122,8 @@ public class WorldRendererMixin {
 
     @Inject(method = "drawBlockOutline", at = @At("HEAD"), cancellable = true)
     private void onDrawBlockOutline(MatrixStack matrices, VertexConsumer vertexConsumer, double cameraX,
-            double cameraY, double cameraZ, OutlineRenderState outlineRenderState, int i, CallbackInfo ci) {
+            double cameraY, double cameraZ, OutlineRenderState outlineRenderState, int i, float lineWidth,
+            CallbackInfo ci) {
         if (GhostBlockService.getCurrentTarget() != null) {
             ci.cancel();
         }

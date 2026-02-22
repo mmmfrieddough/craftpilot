@@ -54,7 +54,7 @@ public class ServerNetworking {
             itemStack = player.getStackInHand(hand);
         }
 
-        if (player.isLoaded()) {
+        if (!player.isDisconnected()) {
             if (itemStack.isItemEnabled(world.getEnabledFeatures())) {
                 // The player must be in range or in creative mode
                 if (player.canInteractWithBlockAt(blockPos, 1.0) || player.isCreative()) {

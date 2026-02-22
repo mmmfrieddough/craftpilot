@@ -16,7 +16,6 @@ import net.minecraft.client.render.block.MovingBlockRenderState;
 import net.minecraft.client.render.command.ModelCommandRenderer;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.command.RenderCommandQueue;
-import net.minecraft.client.render.entity.state.EntityHitboxAndView;
 import net.minecraft.client.render.entity.state.EntityRenderState;
 import net.minecraft.client.render.item.ItemRenderState;
 import net.minecraft.client.render.model.BakedQuad;
@@ -139,9 +138,4 @@ public class AlphaRenderCommandQueue implements OrderedRenderCommandQueue {
         delegate.submitCustom(customRenderer);
     }
 
-    @Override
-    public void submitDebugHitbox(MatrixStack matrices, EntityRenderState renderState,
-            EntityHitboxAndView hitboxAndView) {
-        delegate.submitDebugHitbox(matrices, renderState, hitboxAndView);
-    }
 }

@@ -15,6 +15,7 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.VertexRendering;
@@ -76,6 +77,13 @@ public final class GhostBlockRenderService {
         }
 
         @Override
+        public VertexConsumer color(int argb) {
+            int alpha = (argb >> 24) & 0xFF;
+            int scaledAlpha = (int) (alpha * alphaMultiplier);
+            return delegate.color((scaledAlpha << 24) | (argb & 0x00FFFFFF));
+        }
+
+        @Override
         public VertexConsumer texture(float u, float v) {
             return delegate.texture(u, v);
         }
@@ -94,6 +102,11 @@ public final class GhostBlockRenderService {
         public VertexConsumer normal(float x, float y, float z) {
             return delegate.normal(x, y, z);
         }
+
+        @Override
+        public VertexConsumer lineWidth(float width) {
+            return delegate.lineWidth(width);
+        }
     }
 
     /**
@@ -102,12 +115,12 @@ public final class GhostBlockRenderService {
     public static void renderGhostBlocks(MinecraftClient client, Map<BlockPos, BlockState> ghostBlocks, Camera camera,
             int renderDistance, float opacity, MatrixStack matrices, VertexConsumerProvider.Immediate immediate) {
         BlockPos cameraPos = camera.getBlockPos();
-        double cameraX = camera.getPos().x;
-        double cameraY = camera.getPos().y;
-        double cameraZ = camera.getPos().z;
+        double cameraX = camera.getCameraPos().x;
+        double cameraY = camera.getCameraPos().y;
+        double cameraZ = camera.getCameraPos().z;
 
         BlockRenderManager blockRenderManager = client.getBlockRenderManager();
-        RenderLayer renderLayer = RenderLayer.getTranslucentMovingBlock();
+        RenderLayer renderLayer = RenderLayers.translucentMovingBlock();
         // Render ghost blocks
         for (Map.Entry<BlockPos, BlockState> entry : ghostBlocks.entrySet()) {
             BlockPos pos = entry.getKey();
@@ -180,13 +193,13 @@ public final class GhostBlockRenderService {
     public static void renderBlockOutlines(MinecraftClient client, Map<BlockPos, BlockState> ghostBlocks, Camera camera,
             int renderDistance, Rendering config, MatrixStack matrices, VertexConsumerProvider.Immediate immediate) {
         BlockPos cameraPos = camera.getBlockPos();
-        double cameraX = camera.getPos().x;
-        double cameraY = camera.getPos().y;
-        double cameraZ = camera.getPos().z;
+        double cameraX = camera.getCameraPos().x;
+        double cameraY = camera.getCameraPos().y;
+        double cameraZ = camera.getCameraPos().z;
 
         BlockPos targetedBlock = GhostBlockService.getCurrentTargetPos();
 
-        VertexConsumer normalVertices = immediate.getBuffer(RenderLayer.getLines());
+        VertexConsumer normalVertices = immediate.getBuffer(RenderLayers.lines());
 
         int alpha = (int) (config.blockOutlineOpacity * 255.0f);
         int normalColor = (alpha << 24) | config.normalOutlineColor;
@@ -196,7 +209,7 @@ public final class GhostBlockRenderService {
             if (!pos.equals(targetedBlock) && pos.isWithinDistance(cameraPos, renderDistance)) {
                 VoxelShape shape = entry.getValue().getOutlineShape(client.world, pos);
                 VertexRendering.drawOutline(matrices, normalVertices, shape, pos.getX() - cameraX, pos.getY() - cameraY,
-                        pos.getZ() - cameraZ, normalColor);
+                        pos.getZ() - cameraZ, normalColor, 1.0f);
             }
         }
 
@@ -204,13 +217,13 @@ public final class GhostBlockRenderService {
 
         // Second pass: render targeted block
         if (targetedBlock != null && targetedBlock.isWithinDistance(cameraPos, renderDistance)) {
-            VertexConsumer targetedVertices = immediate.getBuffer(RenderLayer.getLines());
+            VertexConsumer targetedVertices = immediate.getBuffer(RenderLayers.lines());
 
             BlockState state = ghostBlocks.get(targetedBlock);
             int targetedColor = (alpha << 24) | config.targetedOutlineColor;
             VoxelShape shape = state.getOutlineShape(client.world, targetedBlock);
             VertexRendering.drawOutline(matrices, targetedVertices, shape, targetedBlock.getX() - cameraX,
-                    targetedBlock.getY() - cameraY, targetedBlock.getZ() - cameraZ, targetedColor);
+                    targetedBlock.getY() - cameraY, targetedBlock.getZ() - cameraZ, targetedColor, 1.0f);
 
             immediate.draw();
         }
